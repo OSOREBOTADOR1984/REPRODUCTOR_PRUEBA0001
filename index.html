@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mi Reproductor MP3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #121212;
+      color: white;
+      margin: 0;
+    }
+    audio {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Reproductor de Prueba</h1>
+  <p>Presiona Play para escuchar el audio:</p>
+
+  <!-- Elemento de audio nativo de HTML5 con controles -->
+  <audio controls>
+    <source src="cancion.mp3" type="audio/mpeg">
+    Tu navegador no soporta el reproductor de audio.
+  </audio>
+
+</body>
+</html>
