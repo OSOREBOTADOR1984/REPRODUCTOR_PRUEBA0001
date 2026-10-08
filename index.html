@@ -294,8 +294,8 @@
     </div>
   </div>
 
-  <!-- Audio nativo -->
-  <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+  <!-- Audio nativo con playsinline -->
+  <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" playsinline></audio>
 
   <script>
     const audio = document.getElementById('audio');
@@ -313,15 +313,50 @@
     const artistName = document.getElementById('artistName');
     const sourceBadge = document.getElementById('sourceBadge');
 
+    // Función para conectar con la pantalla de bloqueo y barra de notificaciones
+    function updateMediaSession(title, artist) {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title,
+          artist: artist,
+          album: 'Mi Reproductor',
+          artwork: [
+            { src: 'https://cdn-icons-png.flaticon.com/512/3075/3075908.png', sizes: '512x512', type: 'image/png' }
+          ]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => {
+          audio.play();
+          playBtn.textContent = '⏸';
+          vinyl.classList.add('spinning');
+        });
+
+        navigator.mediaSession.setActionHandler('pause', () => {
+          audio.pause();
+          playBtn.textContent = '▶';
+          vinyl.classList.remove('spinning');
+        });
+
+        navigator.mediaSession.setActionHandler('seekbackward', () => {
+          audio.currentTime = Math.max(audio.currentTime - 10, 0);
+        });
+
+        navigator.mediaSession.setActionHandler('seekforward', () => {
+          audio.currentTime = Math.min(audio.currentTime + 10, audio.duration || 0);
+        });
+      }
+    }
+
+    // Inicializar con la pista por defecto
+    updateMediaSession('Melodía de Prueba', 'SoundHelix');
+
     // Manejar archivo subido por el usuario
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
-        // Crear una URL temporal del archivo local en el navegador
         const fileUrl = URL.createObjectURL(file);
         audio.src = fileUrl;
         
-        // Quitar la extensión del archivo para el título
         const cleanName = file.name.replace(/\.[^/.]+$/, "");
         songTitle.textContent = cleanName;
         artistName.textContent = "Archivo local";
@@ -329,12 +364,13 @@
         sourceBadge.style.color = "#10b981";
         sourceBadge.style.background = "rgba(16, 185, 129, 0.15)";
 
-        // Iniciar reproducción automáticamente
+        // Registrar título para pantalla de bloqueo
+        updateMediaSession(cleanName, "Música Local");
+
         audio.play().then(() => {
           playBtn.textContent = '⏸';
           vinyl.classList.add('spinning');
         }).catch(() => {
-          // Si el navegador bloquea el autoplay
           playBtn.textContent = '▶';
           vinyl.classList.remove('spinning');
         });
@@ -359,7 +395,7 @@
       audio.currentTime = 0;
     });
 
-    // Avanzar 10 segundos
+    // Adelantar 10 segundos
     forwardBtn.addEventListener('click', () => {
       audio.currentTime = Math.min(audio.currentTime + 10, audio.duration || 0);
     });
@@ -369,7 +405,7 @@
       audio.volume = e.target.value;
     });
 
-    // Formatear minutos y segundos
+    // Formatear tiempos
     function formatTime(seconds) {
       if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
       const mins = Math.floor(seconds / 60);
