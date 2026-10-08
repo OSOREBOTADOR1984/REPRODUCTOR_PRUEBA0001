@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Reproductor MP3 Moderno</title>
+  <title>ATLAS PLAYER</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#8b5cf6">
-  <!-- Biblioteca para leer metadatos y carátula incrustada del MP3/Audio -->
+  <!-- Biblioteca para leer metadatos y carátula incrustada -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   <style>
     * {
@@ -52,7 +52,7 @@
       margin-bottom: 20px;
     }
 
-    /* Carátula de vinilo con portada de álbum */
+    /* Carátula de vinilo con portada */
     .vinyl-wrapper {
       position: relative;
       width: 190px;
@@ -89,13 +89,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
+      font-size: 32px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
       overflow: hidden;
       position: relative;
     }
 
-    /* Pequeño centro del disco */
     .vinyl-hole {
       width: 14px;
       height: 14px;
@@ -271,12 +270,12 @@
 <body>
 
   <div class="player-card">
-    <span class="badge" id="sourceBadge">Pista por defecto</span>
+    <span class="badge" id="sourceBadge">ATLAS PLAYER</span>
 
     <div class="vinyl-wrapper">
       <div class="vinyl" id="vinyl">
         <div class="vinyl-center" id="vinylCenter">
-          <span id="centerIcon">🎵</span>
+          <span id="centerIcon">🐻</span>
           <div class="vinyl-hole"></div>
         </div>
       </div>
@@ -337,7 +336,7 @@
     const artistName = document.getElementById('artistName');
     const sourceBadge = document.getElementById('sourceBadge');
 
-    const defaultCover = 'https://cdn-icons-png.flaticon.com/512/3075/3075908.png';
+    const defaultCover = 'https://cdn-icons-png.flaticon.com/512/1998/1998610.png';
 
     // Función para actualizar controles del sistema (pantalla bloqueada)
     function updateMediaSession(title, artist, artworkUrl) {
@@ -345,7 +344,7 @@
         navigator.mediaSession.metadata = new MediaMetadata({
           title: title,
           artist: artist,
-          album: 'Mi Reproductor',
+          album: 'ATLAS PLAYER',
           artwork: [
             { src: artworkUrl || defaultCover, sizes: '512x512', type: 'image/png' }
           ]
@@ -409,7 +408,6 @@
                 vinylCenter.style.backgroundImage = `url(${base64})`;
                 centerIcon.style.display = 'none';
               } else {
-                // Si el audio no tiene imagen incrustada
                 vinylCenter.style.backgroundImage = 'none';
                 centerIcon.style.display = 'block';
               }
@@ -419,7 +417,6 @@
               updateMediaSession(displayTitle, displayArtist, coverUrl);
             },
             onError: function() {
-              // Si falla la lectura de metadatos, usar valores por defecto
               songTitle.textContent = displayTitle;
               artistName.textContent = displayArtist;
               vinylCenter.style.backgroundImage = 'none';
