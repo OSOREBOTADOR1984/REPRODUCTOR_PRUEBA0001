@@ -1,13 +1,13 @@
 {
-  "name": "Mi Reproductor MP3",
-  "short_name": "Reproductor",
+  "name": "ATLAS PLAYER",
+  "short_name": "ATLAS",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0f0c29",
   "theme_color": "#8b5cf6",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3075/3075908.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/1998/1998610.png",
       "sizes": "512x512",
       "type": "image/png"
     }
