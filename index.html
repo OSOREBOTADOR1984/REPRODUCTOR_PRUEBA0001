@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Reproductor MP3 Moderno</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#8b5cf6">
   <style>
     * {
       box-sizing: border-box;
@@ -251,7 +253,7 @@
     </div>
   </div>
 
-  <!-- Audio nativo oculto controlado mediante JavaScript -->
+  <!-- Audio de prueba -->
   <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
 
   <script>
@@ -284,7 +286,7 @@
       audio.currentTime = 0;
     });
 
-    // Avanzar 10 segundos
+    // Adelantar 10 segundos
     forwardBtn.addEventListener('click', () => {
       audio.currentTime = Math.min(audio.currentTime + 10, audio.duration || 0);
     });
