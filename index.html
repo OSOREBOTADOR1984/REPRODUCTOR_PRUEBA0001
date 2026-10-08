@@ -47,15 +47,15 @@
       background: rgba(168, 85, 247, 0.15);
       padding: 6px 14px;
       border-radius: 20px;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
 
     /* Carátula de vinilo */
     .vinyl-wrapper {
       position: relative;
-      width: 190px;
-      height: 190px;
-      margin: 0 auto 24px auto;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 20px auto;
     }
 
     .vinyl {
@@ -77,8 +77,8 @@
     }
 
     .vinyl-center {
-      width: 75px;
-      height: 75px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       background: linear-gradient(135deg, #ec4899, #8b5cf6);
       display: flex;
@@ -94,15 +94,48 @@
     }
 
     h2 {
-      font-size: 22px;
+      font-size: 19px;
       font-weight: 700;
       margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     p.artist {
       color: #94a3b8;
-      font-size: 14px;
-      margin-bottom: 24px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    /* Botón para subir archivo */
+    .file-input-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      color: #e2e8f0;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .file-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: #a855f7;
+      color: #ffffff;
+    }
+
+    #fileInput {
+      display: none;
     }
 
     /* Barra de progreso interactiva */
@@ -113,7 +146,7 @@
       border-radius: 10px;
       cursor: pointer;
       position: relative;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .progress-bar {
@@ -129,7 +162,7 @@
       justify-content: space-between;
       font-size: 12px;
       color: #94a3b8;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     /* Botones de control */
@@ -138,7 +171,7 @@
       align-items: center;
       justify-content: center;
       gap: 16px;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
 
     .btn {
@@ -158,8 +191,8 @@
     }
 
     .btn-secondary {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       background: rgba(255, 255, 255, 0.12);
       font-size: 18px;
     }
@@ -169,8 +202,8 @@
     }
 
     .btn-main {
-      width: 66px;
-      height: 66px;
+      width: 64px;
+      height: 64px;
       background: linear-gradient(135deg, #ec4899, #8b5cf6);
       font-size: 24px;
       box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4);
@@ -218,7 +251,7 @@
 <body>
 
   <div class="player-card">
-    <span class="badge">Reproduciendo en la nube</span>
+    <span class="badge" id="sourceBadge">Pista por defecto</span>
 
     <div class="vinyl-wrapper">
       <div class="vinyl" id="vinyl">
@@ -226,8 +259,16 @@
       </div>
     </div>
 
-    <h2>Melodía de Prueba</h2>
-    <p class="artist">SoundHelix &bull; Piano Synth</p>
+    <h2 id="songTitle">Melodía de Prueba</h2>
+    <p class="artist" id="artistName">SoundHelix &bull; Piano Synth</p>
+
+    <!-- Botón para elegir archivo de música -->
+    <div class="file-input-wrapper">
+      <label for="fileInput" class="file-btn">
+        📁 Elegir mi música
+      </label>
+      <input type="file" id="fileInput" accept="audio/*">
+    </div>
 
     <!-- Barra de progreso -->
     <div class="progress-container" id="progressContainer">
@@ -253,7 +294,7 @@
     </div>
   </div>
 
-  <!-- Audio de prueba -->
+  <!-- Audio nativo -->
   <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
 
   <script>
@@ -267,6 +308,38 @@
     const currentTimeEl = document.getElementById('currentTime');
     const durationEl = document.getElementById('duration');
     const volumeSlider = document.getElementById('volumeSlider');
+    const fileInput = document.getElementById('fileInput');
+    const songTitle = document.getElementById('songTitle');
+    const artistName = document.getElementById('artistName');
+    const sourceBadge = document.getElementById('sourceBadge');
+
+    // Manejar archivo subido por el usuario
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Crear una URL temporal del archivo local en el navegador
+        const fileUrl = URL.createObjectURL(file);
+        audio.src = fileUrl;
+        
+        // Quitar la extensión del archivo para el título
+        const cleanName = file.name.replace(/\.[^/.]+$/, "");
+        songTitle.textContent = cleanName;
+        artistName.textContent = "Archivo local";
+        sourceBadge.textContent = "Tu Música";
+        sourceBadge.style.color = "#10b981";
+        sourceBadge.style.background = "rgba(16, 185, 129, 0.15)";
+
+        // Iniciar reproducción automáticamente
+        audio.play().then(() => {
+          playBtn.textContent = '⏸';
+          vinyl.classList.add('spinning');
+        }).catch(() => {
+          // Si el navegador bloquea el autoplay
+          playBtn.textContent = '▶';
+          vinyl.classList.remove('spinning');
+        });
+      }
+    });
 
     // Control Play / Pausa
     playBtn.addEventListener('click', () => {
@@ -286,7 +359,7 @@
       audio.currentTime = 0;
     });
 
-    // Adelantar 10 segundos
+    // Avanzar 10 segundos
     forwardBtn.addEventListener('click', () => {
       audio.currentTime = Math.min(audio.currentTime + 10, audio.duration || 0);
     });
@@ -296,9 +369,9 @@
       audio.volume = e.target.value;
     });
 
-    // Actualización de tiempos y barra
+    // Formatear minutos y segundos
     function formatTime(seconds) {
-      if (isNaN(seconds)) return '0:00';
+      if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
       const mins = Math.floor(seconds / 60);
       const secs = Math.floor(seconds % 60);
       return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
