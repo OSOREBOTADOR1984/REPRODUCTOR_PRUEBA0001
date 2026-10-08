@@ -7,13 +7,11 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#8b5cf6">
   
-  <!-- Compatibilidad iOS / Safari -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Atlas Player">
   <link rel="apple-touch-icon" href="icono-oso.png">
 
-  <!-- Lectura de metadatos ID3 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   
   <style>
@@ -37,7 +35,7 @@
       padding: 20px 15px;
     }
 
-    /* PANTALLA DE BLOQUEO POR TOKEN */
+    /* PANTALLA DE BLOQUEO */
     #lockScreen {
       position: fixed;
       top: 0;
@@ -53,12 +51,63 @@
       padding: 20px;
     }
 
+    /* NOTIFICACIÓN FLOTANTE PARA EL DISEÑADOR */
+    #designerAlert {
+      display: none;
+      width: 90%;
+      max-width: 400px;
+      background: rgba(139, 92, 246, 0.25);
+      border: 1px solid #8b5cf6;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 14px 18px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+      text-align: left;
+      animation: pulseAlert 2s infinite alternate;
+    }
+
+    @keyframes pulseAlert {
+      from { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); }
+      to { box-shadow: 0 0 20px rgba(139, 92, 246, 0.6); }
+    }
+
+    .alert-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: #c4b5fd;
+      margin-bottom: 6px;
+    }
+
+    .alert-body {
+      font-size: 12px;
+      line-height: 1.4;
+      color: #f3f4f6;
+    }
+
+    .today-token-badge {
+      display: inline-block;
+      background: #8b5cf6;
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      margin-top: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
     .lock-box {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(139, 92, 246, 0.3);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      padding: 30px 24px;
+      padding: 26px 22px;
       border-radius: 24px;
       width: 100%;
       max-width: 360px;
@@ -67,22 +116,23 @@
     }
 
     .lock-icon {
-      font-size: 45px;
-      margin-bottom: 15px;
+      font-size: 42px;
+      margin-bottom: 12px;
       display: block;
     }
 
     .lock-title {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 700;
       margin-bottom: 6px;
       letter-spacing: 1px;
+      cursor: pointer;
     }
 
     .lock-desc {
-      font-size: 13px;
+      font-size: 12px;
       color: rgba(255, 255, 255, 0.6);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .token-input {
@@ -123,8 +173,8 @@
 
     .lock-error {
       color: #ff5555;
-      font-size: 12px;
-      margin-top: 12px;
+      font-size: 11px;
+      margin-top: 10px;
       min-height: 16px;
     }
 
@@ -226,8 +276,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 18px;
+      gap: 14px;
       margin-bottom: 18px;
+      width: 100%;
     }
 
     .btn-control {
@@ -235,13 +286,13 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #ffffff;
       border-radius: 50%;
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 15px;
       transition: all 0.2s ease;
     }
 
@@ -250,17 +301,27 @@
       transform: scale(1.05);
     }
 
+    .btn-toggle {
+      width: 36px;
+      height: 36px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-toggle.active {
+      color: #8b5cf6;
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.2);
+    }
+
     .btn-play {
-      width: 54px;
-      height: 54px;
+      width: 52px;
+      height: 52px;
       background: #8b5cf6;
       border-color: #8b5cf6;
       font-size: 22px;
       box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
-    }
-
-    .btn-play:hover {
-      background: #7c3aed;
     }
 
     .downloader-box {
@@ -293,10 +354,6 @@
       -webkit-user-select: text;
     }
 
-    #urlInput:focus {
-      border-color: #8b5cf6;
-    }
-
     .btn-download-url {
       background: #8b5cf6;
       border: none;
@@ -306,12 +363,6 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s ease;
-    }
-
-    .btn-download-url:hover {
-      background: #7c3aed;
     }
 
     .download-status {
@@ -338,11 +389,6 @@
       font-size: 12px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #ffffff;
-      transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
     }
 
     input[type="file"] {
@@ -358,15 +404,6 @@
       padding-bottom: 4px;
     }
 
-    .playlist-tabs::-webkit-scrollbar {
-      height: 4px;
-    }
-
-    .playlist-tabs::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
     .tab-btn {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -376,7 +413,6 @@
       color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.2s ease;
     }
 
     .tab-btn.active {
@@ -399,19 +435,8 @@
       color: #ffffff;
       font-size: 13px;
       outline: none;
-      transition: all 0.3s ease;
       user-select: text;
       -webkit-user-select: text;
-    }
-
-    #searchInput:focus {
-      border-color: #8b5cf6;
-      background: rgba(255, 255, 255, 0.14);
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
-    }
-
-    #searchInput::placeholder {
-      color: rgba(255, 255, 255, 0.45);
     }
 
     .playlist-container {
@@ -424,15 +449,6 @@
       padding: 6px;
     }
 
-    .playlist-container::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .playlist-container::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-    }
-
     .song-item {
       padding: 8px 12px;
       border-radius: 8px;
@@ -442,12 +458,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      transition: background 0.2s ease;
       margin-bottom: 2px;
-    }
-
-    .song-item:hover {
-      background: rgba(255, 255, 255, 0.08);
     }
 
     .song-item.active {
@@ -481,12 +492,6 @@
       color: rgba(255, 255, 255, 0.3);
       font-size: 16px;
       cursor: pointer;
-      padding: 4px;
-      transition: color 0.2s ease, transform 0.2s ease;
-    }
-
-    .star-btn:hover {
-      transform: scale(1.2);
     }
 
     .star-btn.fav {
@@ -496,13 +501,29 @@
 </head>
 <body>
 
-  <!-- PANTALLA DE BLOQUEO DE TOKEN -->
+  <!-- PANTALLA DE ACCESO Y PANEL DEL DISEÑADOR -->
   <div id="lockScreen">
+    
+    <!-- NOTIFICACIÓN EN TIEMPO REAL PARA EL CREADOR -->
+    <div id="designerAlert">
+      <div class="alert-header">
+        <span>⚡ PANEL DEL DISEÑADOR</span>
+        <span id="tokenExpiry">Expira a las 23:59</span>
+      </div>
+      <div class="alert-body">
+        Token válido para hoy:
+        <div>
+          <span class="today-token-badge" id="todayTokenBadge" title="Toca para copiar">------</span>
+        </div>
+        <small style="color: #c4b5fd; display:block; margin-top:4px;">(Toca el código para copiarlo al portapapeles y mandarlo)</small>
+      </div>
+    </div>
+
     <div class="lock-box">
       <span class="lock-icon">🔒</span>
-      <div class="lock-title">ACCESO ATLAS</div>
-      <div class="lock-desc">Introduce tu token para desbloquear la aplicación.</div>
-      <input type="password" id="tokenField" class="token-input" placeholder="••••••••" autocomplete="off">
+      <div class="lock-title" id="lockTitleBtn" title="Triple toque para modo diseñador">ACCESO ATLAS</div>
+      <div class="lock-desc">Introduce tu token diario para desbloquear la sesión.</div>
+      <input type="password" id="tokenField" class="token-input" placeholder="Código de 6 dígitos" autocomplete="off">
       <button class="btn-unlock" id="btnUnlock">Acceder</button>
       <div class="lock-error" id="lockError"></div>
     </div>
@@ -510,7 +531,7 @@
 
   <div class="player-card">
     <div class="cover-container">
-      <img id="coverImg" alt="Portada de canción">
+      <img id="coverImg" alt="Portada">
       <div id="coverPlaceholder" class="cover-placeholder">♪</div>
     </div>
 
@@ -530,9 +551,11 @@
     </div>
 
     <div class="controls">
+      <button class="btn-control btn-toggle" id="shuffleBtn" title="Aleatorio">🔀</button>
       <button class="btn-control" id="prevBtn" title="Anterior">⏮</button>
       <button class="btn-control btn-play" id="playBtn" title="Reproducir">▶</button>
       <button class="btn-control" id="nextBtn" title="Siguiente">⏭</button>
+      <button class="btn-control btn-toggle" id="loopBtn" title="Repetir">🔁</button>
     </div>
 
     <div class="downloader-box">
@@ -569,73 +592,108 @@
   <audio id="audioElement" playsinline preload="auto"></audio>
 
   <script>
-    // --- CAPA DE SEGURIDAD Y BLOQUEO ANTI-COPIA ---
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      // Bloquear F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I
-      if (
-        e.key === 'F12' ||
-        (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) ||
-        (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I'))
-      ) {
-        e.preventDefault();
-        return false;
-      }
-    });
+    // --- SEGURIDAD: TOKEN DIARIO DINÁMICO ---
+    const SECRET_SALT = "ATLAS_SECRET_2026"; // Tu semilla privada
+    const MASTER_DESIGNER_KEY = "ATLAS_CREADOR"; // Tu llave maestra personal
 
-    // Hash SHA-256 del token: "ATLAS2026"
-    const AUTH_HASH = "805a5dbe8ae0b832b8fa5e34749ff827254e4ae2c90c74fb91e0a986ea9a7338";
+    function getTodayDateString() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    }
 
-    async function computeSHA256(text) {
-      const msgBuffer = new TextEncoder().encode(text);
+    // Genera un token numérico único de 6 dígitos que cambia cada medianoche
+    async function generateDailyToken(dateStr) {
+      const msg = SECRET_SALT + "_" + dateStr;
+      const msgBuffer = new TextEncoder().encode(msg);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      // Tomamos los primeros bytes para calcular 6 dígitos legibles
+      const num = ((hashArray[0] << 24) | (hashArray[1] << 16) | (hashArray[2] << 8) | hashArray[3]) >>> 0;
+      return String(num % 900000 + 100000); // Siempre 6 dígitos (ej: 482910)
     }
 
     const lockScreen = document.getElementById('lockScreen');
+    const designerAlert = document.getElementById('designerAlert');
+    const todayTokenBadge = document.getElementById('todayTokenBadge');
     const tokenField = document.getElementById('tokenField');
     const btnUnlock = document.getElementById('btnUnlock');
     const lockError = document.getElementById('lockError');
+    const lockTitleBtn = document.getElementById('lockTitleBtn');
 
-    // Verificar si el dispositivo ya fue autorizado previamente
-    if (localStorage.getItem('atlas_device_authorized') === AUTH_HASH) {
-      lockScreen.style.display = 'none';
-    }
+    let currentDailyToken = "";
 
-    async function checkToken() {
-      const input = tokenField.value.trim();
-      if (!input) return;
+    async function initAuth() {
+      const today = getTodayDateString();
+      currentDailyToken = await generateDailyToken(today);
 
-      const hashed = await computeSHA256(input);
-      if (hashed === AUTH_HASH) {
-        localStorage.setItem('atlas_device_authorized', AUTH_HASH);
+      // Si eres el diseñador (marcado en tu dispositivo), mostrar la alerta de inmediato
+      const isDesigner = localStorage.getItem('atlas_role') === 'designer';
+      if (isDesigner) {
+        designerAlert.style.display = 'block';
+        todayTokenBadge.textContent = currentDailyToken;
+      }
+
+      // Si el cliente ya ingresó el token DE HOY, entra directo sin pedirlo otra vez hoy
+      const lastSessionDate = localStorage.getItem('atlas_authorized_date');
+      if (lastSessionDate === today) {
         lockScreen.style.display = 'none';
-      } else {
-        lockError.textContent = 'Token incorrecto. Acceso denegado.';
-        tokenField.value = '';
       }
     }
+    initAuth();
 
-    btnUnlock.addEventListener('click', checkToken);
-    tokenField.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') checkToken();
+    // Copiar el token de hoy al tocar el badge
+    todayTokenBadge.addEventListener('click', () => {
+      navigator.clipboard.writeText(currentDailyToken);
+      alert('Token copiado al portapapeles: ' + currentDailyToken);
     });
 
-    // --- SERVICE WORKER ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => {
-          console.log('SW:', err);
-        });
-      });
-    }
+    // Activar modo diseñador con clave maestra en el input
+    btnUnlock.addEventListener('click', async () => {
+      const val = tokenField.value.trim();
+      const today = getTodayDateString();
 
-    // --- REPRODUCTOR ---
+      if (val === MASTER_DESIGNER_KEY) {
+        localStorage.setItem('atlas_role', 'designer');
+        designerAlert.style.display = 'block';
+        todayTokenBadge.textContent = currentDailyToken;
+        lockScreen.style.display = 'none';
+        alert('Modo diseñador activado en este teléfono.');
+        return;
+      }
+
+      if (val === currentDailyToken) {
+        // Acceso diario válido
+        localStorage.setItem('atlas_authorized_date', today);
+        lockScreen.style.display = 'none';
+      } else {
+        lockError.textContent = 'Token incorrecto o expirado para hoy.';
+        tokenField.value = '';
+      }
+    });
+
+    tokenField.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') btnUnlock.click();
+    });
+
+    // Triple toque en el título para revelar panel si eres el dueño
+    let tapCount = 0;
+    lockTitleBtn.addEventListener('click', () => {
+      tapCount++;
+      if (tapCount >= 3) {
+        designerAlert.style.display = 'block';
+        todayTokenBadge.textContent = currentDailyToken;
+        tapCount = 0;
+      }
+      setTimeout(() => { tapCount = 0; }, 1500);
+    });
+
+    // --- REPRODUCTOR COMPLETO ---
     const audioElement = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const loopBtn = document.getElementById('loopBtn');
     const fileInput = document.getElementById('audioFiles');
     const playlistContainer = document.getElementById('playlistContainer');
     const playlistTabs = document.getElementById('playlistTabs');
@@ -659,6 +717,8 @@
     let currentFilterTab = 'todas';
     let currentPlayingIndex = -1;
     let isPlaying = false;
+    let isShuffle = false;
+    let loopMode = 0;
 
     let savedData = JSON.parse(localStorage.getItem('atlas_music_data')) || {
       favoritos: [],
@@ -676,82 +736,154 @@
       return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
-    btnDownloadUrl.addEventListener('click', async () => {
-      const url = urlInput.value.trim();
-      if (!url) {
-        downloadStatus.textContent = 'Pega un enlace válido.';
+    function updateMediaSession(track) {
+      if ('mediaSession' in navigator) {
+        let artworkSrc = 'icono-oso.png';
+        if (track.picture) {
+          const { data, format } = track.picture;
+          let base64String = "";
+          for (let i = 0; i < data.length; i++) {
+            base64String += String.fromCharCode(data[i]);
+          }
+          artworkSrc = `data:${format};base64,${window.btoa(base64String)}`;
+        }
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title,
+          artist: track.artist,
+          album: 'Atlas Library',
+          artwork: [{ src: artworkSrc, sizes: '512x512', type: 'image/png' }]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => playAudio());
+        navigator.mediaSession.setActionHandler('pause', () => pauseAudio());
+        navigator.mediaSession.setActionHandler('previoustrack', () => playPrevTrack());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack());
+      }
+    }
+
+    shuffleBtn.addEventListener('click', () => {
+      isShuffle = !isShuffle;
+      shuffleBtn.classList.toggle('active', isShuffle);
+    });
+
+    loopBtn.addEventListener('click', () => {
+      loopMode = (loopMode + 1) % 3;
+      if (loopMode === 0) {
+        loopBtn.classList.remove('active');
+        loopBtn.textContent = '🔁';
+      } else if (loopMode === 1) {
+        loopBtn.classList.add('active');
+        loopBtn.textContent = '🔁';
+      } else {
+        loopBtn.classList.add('active');
+        loopBtn.textContent = '🔂';
+      }
+    });
+
+    function getVisibleTracks() {
+      return allTracks.filter(track => {
+        if (currentFilterTab === 'todas') return true;
+        if (currentFilterTab === 'favoritos') return savedData.favoritos.includes(track.id);
+        return (savedData.playlists[currentFilterTab] || []).includes(track.id);
+      });
+    }
+
+    function playNextTrack() {
+      const visible = getVisibleTracks();
+      if (visible.length === 0) return;
+
+      if (loopMode === 2) {
+        loadTrack(currentPlayingIndex);
+        playAudio();
         return;
       }
 
-      downloadStatus.textContent = 'Procesando enlace...';
+      if (isShuffle) {
+        const randIdx = Math.floor(Math.random() * visible.length);
+        loadTrack(visible[randIdx].index);
+      } else {
+        const currentPos = visible.findIndex(t => t.index === currentPlayingIndex);
+        if (currentPos >= 0 && currentPos < visible.length - 1) {
+          loadTrack(visible[currentPos + 1].index);
+        } else if (loopMode === 1) {
+          loadTrack(visible[0].index);
+        } else {
+          pauseAudio();
+          return;
+        }
+      }
+      playAudio();
+    }
 
-      const instances = [
-        'https://cobalt-backend.canine.tools',
-        'https://api.cobalt.tools'
-      ];
+    function playPrevTrack() {
+      const visible = getVisibleTracks();
+      if (visible.length === 0) return;
 
+      if (audioElement.currentTime > 3) {
+        audioElement.currentTime = 0;
+        return;
+      }
+
+      if (isShuffle) {
+        const randIdx = Math.floor(Math.random() * visible.length);
+        loadTrack(visible[randIdx].index);
+      } else {
+        const currentPos = visible.findIndex(t => t.index === currentPlayingIndex);
+        if (currentPos > 0) {
+          loadTrack(visible[currentPos - 1].index);
+        } else {
+          loadTrack(visible[visible.length - 1].index);
+        }
+      }
+      playAudio();
+    }
+
+    nextBtn.addEventListener('click', playNextTrack);
+    prevBtn.addEventListener('click', playPrevTrack);
+    audioElement.addEventListener('ended', playNextTrack);
+
+    btnDownloadUrl.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) return;
+      downloadStatus.textContent = 'Procesando...';
+
+      const instances = ['https://cobalt-backend.canine.tools', 'https://api.cobalt.tools'];
       let audioUrl = null;
       let filename = 'Pista Descargada';
 
-      for (let instance of instances) {
+      for (let inst of instances) {
         try {
-          const res = await fetch(`${instance}/`, {
+          const res = await fetch(`${inst}/`, {
             method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              url: url,
-              downloadMode: 'audio',
-              audioFormat: 'm4a'
-            })
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url, downloadMode: 'audio', audioFormat: 'm4a' })
           });
-
-          const data = await res.json();
-          if (data && (data.url || data.status === 'tunnel' || data.status === 'redirect')) {
-            audioUrl = data.url;
-            if (data.filename) filename = data.filename.replace(/\.[^/.]+$/, "");
+          const d = await res.json();
+          if (d && (d.url || d.status === 'tunnel' || d.status === 'redirect')) {
+            audioUrl = d.url;
+            if (d.filename) filename = d.filename.replace(/\.[^/.]+$/, "");
             break;
           }
-        } catch (e) {
-          console.warn('Reintentando...', e);
-        }
+        } catch (e) {}
       }
 
       if (audioUrl) {
-        downloadStatus.textContent = 'Descargando al dispositivo...';
+        downloadStatus.textContent = 'Descargando...';
         try {
           const fileResp = await fetch(audioUrl);
           const blob = await fileResp.blob();
           const localBlobUrl = URL.createObjectURL(blob);
-
-          const newTrack = {
-            id: `${Date.now()}_${filename}`,
-            index: allTracks.length,
-            file: blob,
-            url: localBlobUrl,
-            title: filename,
-            artist: 'Descarga Directa'
-          };
-
+          const newTrack = { id: `${Date.now()}_${filename}`, index: allTracks.length, file: blob, url: localBlobUrl, title: filename, artist: 'Descarga Directa' };
           allTracks.push(newTrack);
           renderPlaylist();
           loadTrack(newTrack.index);
           playAudio();
-
           downloadStatus.textContent = '¡Listo!';
           urlInput.value = '';
           setTimeout(() => { downloadStatus.textContent = ''; }, 3500);
         } catch (err) {
-          const newTrack = {
-            id: `${Date.now()}_${filename}`,
-            index: allTracks.length,
-            file: null,
-            url: audioUrl,
-            title: filename,
-            artist: 'Audio Enlace'
-          };
+          const newTrack = { id: `${Date.now()}_${filename}`, index: allTracks.length, file: null, url: audioUrl, title: filename, artist: 'Audio Enlace' };
           allTracks.push(newTrack);
           renderPlaylist();
           loadTrack(newTrack.index);
@@ -760,14 +892,13 @@
           urlInput.value = '';
         }
       } else {
-        downloadStatus.textContent = 'No se pudo procesar.';
+        downloadStatus.textContent = 'Error al procesar.';
       }
     });
 
     fileInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
-
       const newEntries = files.map((file, idx) => ({
         id: file.name,
         index: allTracks.length + idx,
@@ -776,9 +907,7 @@
         title: file.name.replace(/\.[^/.]+$/, ""),
         artist: 'Artista Desconocido'
       }));
-
       allTracks = allTracks.concat(newEntries);
-
       renderTabs();
       renderPlaylist();
       extractMetadataForFiles();
@@ -788,7 +917,6 @@
     function renderTabs() {
       const existingCustom = playlistTabs.querySelectorAll('.tab-custom');
       existingCustom.forEach(t => t.remove());
-
       Object.keys(savedData.playlists).forEach(plName => {
         const btn = document.createElement('button');
         btn.className = `tab-btn tab-custom ${currentFilterTab === plName ? 'active' : ''}`;
@@ -801,7 +929,6 @@
     playlistTabs.addEventListener('click', (e) => {
       const tab = e.target.closest('.tab-btn');
       if (!tab || tab.id === 'createPlaylistBtn') return;
-
       playlistTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       tab.classList.add('active');
       currentFilterTab = tab.dataset.tab;
@@ -811,9 +938,9 @@
     createPlaylistBtn.addEventListener('click', () => {
       const name = prompt('Nombre de la nueva lista:');
       if (name && name.trim()) {
-        const cleanName = name.trim();
-        if (!savedData.playlists[cleanName]) {
-          savedData.playlists[cleanName] = [];
+        const clean = name.trim();
+        if (!savedData.playlists[clean]) {
+          savedData.playlists[clean] = [];
           saveAppData();
           renderTabs();
         }
@@ -822,14 +949,9 @@
 
     function renderPlaylist() {
       playlistContainer.innerHTML = '';
+      const visible = getVisibleTracks();
 
-      let filteredTracks = allTracks.filter(track => {
-        if (currentFilterTab === 'todas') return true;
-        if (currentFilterTab === 'favoritos') return savedData.favoritos.includes(track.id);
-        return (savedData.playlists[currentFilterTab] || []).includes(track.id);
-      });
-
-      filteredTracks.forEach((track) => {
+      visible.forEach((track) => {
         const isFav = savedData.favoritos.includes(track.id);
         const item = document.createElement('div');
         item.className = `song-item ${track.index === currentPlayingIndex ? 'active' : ''}`;
@@ -840,7 +962,7 @@
             <div class="song-title-row">${track.title}</div>
             <div class="song-artist-row">${track.artist}</div>
           </div>
-          <button class="star-btn ${isFav ? 'fav' : ''}" title="Marcar como favorita">★</button>
+          <button class="star-btn ${isFav ? 'fav' : ''}">★</button>
         `;
 
         item.querySelector('.song-details').addEventListener('click', () => {
@@ -856,7 +978,6 @@
 
         playlistContainer.appendChild(item);
       });
-
       applySearchFilter();
     }
 
@@ -870,14 +991,11 @@
         btnElement.classList.add('fav');
       }
       saveAppData();
-      if (currentFilterTab === 'favoritos') {
-        renderPlaylist();
-      }
+      if (currentFilterTab === 'favoritos') renderPlaylist();
     }
 
     function extractMetadataForFiles() {
       if (!window.jsmediatags) return;
-
       allTracks.forEach((track) => {
         if (!track.file) return;
         window.jsmediatags.read(track.file, {
@@ -886,15 +1004,14 @@
             if (tags.title) track.title = tags.title;
             if (tags.artist) track.artist = tags.artist;
             if (tags.picture) track.picture = tags.picture;
-
             const domItem = playlistContainer.querySelector(`[data-index="${track.index}"]`);
             if (domItem) {
               domItem.querySelector('.song-title-row').textContent = track.title;
               domItem.querySelector('.song-artist-row').textContent = track.artist;
             }
-
             if (track.index === currentPlayingIndex) {
               updateTrackDisplay(track);
+              updateMediaSession(track);
             }
           },
           onError: () => {}
@@ -908,19 +1025,17 @@
       const track = allTracks[index];
       audioElement.src = track.url;
       updateTrackDisplay(track);
+      updateMediaSession(track);
       highlightCurrentInList();
     }
 
     function updateTrackDisplay(track) {
       trackTitle.textContent = track.title;
       trackArtist.textContent = track.artist;
-
       if (track.picture) {
         const { data, format } = track.picture;
         let base64String = "";
-        for (let i = 0; i < data.length; i++) {
-          base64String += String.fromCharCode(data[i]);
-        }
+        for (let i = 0; i < data.length; i++) base64String += String.fromCharCode(data[i]);
         coverImg.src = `data:${format};base64,${window.btoa(base64String)}`;
         coverImg.style.display = 'block';
         coverPlaceholder.style.display = 'none';
@@ -942,14 +1057,13 @@
     }
 
     function playAudio() {
-      const playPromise = audioElement.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
+      const p = audioElement.play();
+      if (p !== undefined) {
+        p.then(() => {
           isPlaying = true;
           playBtn.textContent = '⏸';
-        }).catch(error => {
-          console.log("Audio en espera de interacción:", error);
-        });
+          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        }).catch(() => {});
       }
     }
 
@@ -957,33 +1071,12 @@
       audioElement.pause();
       isPlaying = false;
       playBtn.textContent = '▶';
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     }
 
     playBtn.addEventListener('click', () => {
       if (allTracks.length === 0) return;
-      if (isPlaying) {
-        pauseAudio();
-      } else {
-        playAudio();
-      }
-    });
-
-    prevBtn.addEventListener('click', () => {
-      if (allTracks.length === 0) return;
-      currentPlayingIndex = (currentPlayingIndex - 1 + allTracks.length) % allTracks.length;
-      loadTrack(currentPlayingIndex);
-      playAudio();
-    });
-
-    nextBtn.addEventListener('click', () => {
-      if (allTracks.length === 0) return;
-      currentPlayingIndex = (currentPlayingIndex + 1) % allTracks.length;
-      loadTrack(currentPlayingIndex);
-      playAudio();
-    });
-
-    audioElement.addEventListener('ended', () => {
-      nextBtn.click();
+      isPlaying ? pauseAudio() : playAudio();
     });
 
     audioElement.addEventListener('timeupdate', () => {
@@ -998,35 +1091,27 @@
     progressBarContainer.addEventListener('click', (e) => {
       if (!audioElement.duration) return;
       const rect = progressBarContainer.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      audioElement.currentTime = (clickX / rect.width) * audioElement.duration;
+      audioElement.currentTime = ((e.clientX - rect.left) / rect.width) * audioElement.duration;
     });
 
     function applySearchFilter() {
       const query = searchInput.value.toLowerCase().trim();
       const items = playlistContainer.querySelectorAll('.song-item');
-
       items.forEach(item => {
         const titleText = item.querySelector('.song-title-row').textContent.toLowerCase();
         const artistText = item.querySelector('.song-artist-row').textContent.toLowerCase();
-
-        if (titleText.includes(query) || artistText.includes(query)) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
+        item.style.display = (titleText.includes(query) || artistText.includes(query)) ? 'flex' : 'none';
       });
     }
 
     searchInput.addEventListener('input', applySearchFilter);
 
     exportBackupBtn.addEventListener('click', () => {
-      const dataStr = JSON.stringify(savedData, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(savedData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `atlas_playlists_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `atlas_backup_${getTodayDateString()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     });
@@ -1034,7 +1119,6 @@
     importBackupInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
@@ -1044,13 +1128,9 @@
             saveAppData();
             renderTabs();
             renderPlaylist();
-            alert('¡Listas y favoritos restaurados correctamente!');
-          } else {
-            alert('Formato de respaldo no válido.');
+            alert('¡Restaurado!');
           }
-        } catch (err) {
-          alert('Error al leer el archivo JSON.');
-        }
+        } catch (err) { alert('Archivo no válido'); }
       };
       reader.readAsText(file);
     });
