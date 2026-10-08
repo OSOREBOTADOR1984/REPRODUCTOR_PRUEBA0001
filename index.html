@@ -2,21 +2,30 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ATLAS PLAYER</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#8b5cf6">
-  <!-- Lectura de metadatos y carátulas ID3 -->
+  
+  <!-- Compatibilidad específica para iOS / iPhone -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Atlas Player">
+  <link rel="apple-touch-icon" href="icono-oso.png">
+
+  <!-- Lectura de metadatos y carátulas (soporta MP3, M4A y AAC) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+  
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -191,7 +200,7 @@
       display: none;
     }
 
-    /* Pestañas de Playlists (Todas / Favoritos / Crear) */
+    /* Pestañas de Playlists */
     .playlist-tabs {
       display: flex;
       gap: 8px;
@@ -257,3 +266,481 @@
     }
 
     /* Lista de canciones */
+    .playlist-container {
+      width: 100%;
+      max-height: 220px;
+      overflow-y: auto;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 6px;
+    }
+
+    .playlist-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .playlist-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+
+    .song-item {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: background 0.2s ease;
+      margin-bottom: 2px;
+    }
+
+    .song-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .song-item.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-left: 3px solid #8b5cf6;
+    }
+
+    .song-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .song-title-row {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .song-artist-row {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .star-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .star-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .star-btn.fav {
+      color: #ffd700;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="player-card">
+    <div class="cover-container">
+      <img id="coverImg" alt="Portada de canción">
+      <div id="coverPlaceholder" class="cover-placeholder">♪</div>
+    </div>
+
+    <div class="track-info">
+      <div id="trackTitle" class="track-title">Sin pistas cargadas</div>
+      <div id="trackArtist" class="track-artist">Selecciona tus archivos de audio</div>
+    </div>
+
+    <div class="progress-box">
+      <div class="progress-bar-container" id="progressBarContainer">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="time-display">
+        <span id="currentTime">0:00</span>
+        <span id="durationTime">0:00</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-control" id="prevBtn" title="Anterior">⏮</button>
+      <button class="btn-control btn-play" id="playBtn" title="Reproducir">▶</button>
+      <button class="btn-control" id="nextBtn" title="Siguiente">⏭</button>
+    </div>
+
+    <div class="actions-bar">
+      <!-- Selector con extensiones explícitas para iOS/Safari/Android -->
+      <label class="action-btn" for="audioFiles">📁 Cargar Música</label>
+      <input type="file" id="audioFiles" accept=".m4a,.mp3,.aac,.wav,.ogg,.opus,audio/*" multiple>
+
+      <button class="action-btn" id="exportBackupBtn">💾 Respaldar</button>
+      
+      <label class="action-btn" for="importBackupInput">📥 Restaurar</label>
+      <input type="file" id="importBackupInput" accept=".json,application/json">
+    </div>
+
+    <div class="playlist-tabs" id="playlistTabs">
+      <button class="tab-btn active" data-tab="todas">Todas</button>
+      <button class="tab-btn" data-tab="favoritos">⭐ Favoritas</button>
+      <button class="tab-btn" id="createPlaylistBtn">+ Crear Lista</button>
+    </div>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Buscar por canción o artista..." autocomplete="off">
+    </div>
+
+    <div class="playlist-container" id="playlistContainer"></div>
+  </div>
+
+  <!-- playsinline y preload para soporte estricto en iOS -->
+  <audio id="audioElement" playsinline preload="auto"></audio>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.log('Fallo en Service Worker:', err);
+        });
+      });
+    }
+
+    const audioElement = document.getElementById('audioElement');
+    const playBtn = document.getElementById('playBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const fileInput = document.getElementById('audioFiles');
+    const playlistContainer = document.getElementById('playlistContainer');
+    const playlistTabs = document.getElementById('playlistTabs');
+    const searchInput = document.getElementById('searchInput');
+    const trackTitle = document.getElementById('trackTitle');
+    const trackArtist = document.getElementById('trackArtist');
+    const coverImg = document.getElementById('coverImg');
+    const coverPlaceholder = document.getElementById('coverPlaceholder');
+    const progressBar = document.getElementById('progressBar');
+    const progressBarContainer = document.getElementById('progressBarContainer');
+    const currentTimeText = document.getElementById('currentTime');
+    const durationTimeText = document.getElementById('durationTime');
+    const createPlaylistBtn = document.getElementById('createPlaylistBtn');
+    const exportBackupBtn = document.getElementById('exportBackupBtn');
+    const importBackupInput = document.getElementById('importBackupInput');
+
+    let allTracks = [];
+    let currentFilterTab = 'todas';
+    let currentPlayingIndex = -1;
+    let isPlaying = false;
+
+    let savedData = JSON.parse(localStorage.getItem('atlas_music_data')) || {
+      favoritos: [],
+      playlists: {}
+    };
+
+    function saveAppData() {
+      localStorage.setItem('atlas_music_data', JSON.stringify(savedData));
+    }
+
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      allTracks = files.map((file, idx) => ({
+        id: file.name,
+        index: idx,
+        file: file,
+        url: URL.createObjectURL(file),
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        artist: 'Artista Desconocido'
+      }));
+
+      renderTabs();
+      renderPlaylist();
+      extractMetadataForFiles();
+      if (allTracks.length > 0) loadTrack(0);
+    });
+
+    function renderTabs() {
+      const existingCustom = playlistTabs.querySelectorAll('.tab-custom');
+      existingCustom.forEach(t => t.remove());
+
+      Object.keys(savedData.playlists).forEach(plName => {
+        const btn = document.createElement('button');
+        btn.className = `tab-btn tab-custom ${currentFilterTab === plName ? 'active' : ''}`;
+        btn.dataset.tab = plName;
+        btn.textContent = plName;
+        playlistTabs.insertBefore(btn, createPlaylistBtn);
+      });
+    }
+
+    playlistTabs.addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab-btn');
+      if (!tab || tab.id === 'createPlaylistBtn') return;
+
+      playlistTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilterTab = tab.dataset.tab;
+      renderPlaylist();
+    });
+
+    createPlaylistBtn.addEventListener('click', () => {
+      const name = prompt('Nombre de la nueva lista:');
+      if (name && name.trim()) {
+        const cleanName = name.trim();
+        if (!savedData.playlists[cleanName]) {
+          savedData.playlists[cleanName] = [];
+          saveAppData();
+          renderTabs();
+        }
+      }
+    });
+
+    function renderPlaylist() {
+      playlistContainer.innerHTML = '';
+
+      let filteredTracks = allTracks.filter(track => {
+        if (currentFilterTab === 'todas') return true;
+        if (currentFilterTab === 'favoritos') return savedData.favoritos.includes(track.id);
+        return (savedData.playlists[currentFilterTab] || []).includes(track.id);
+      });
+
+      filteredTracks.forEach((track) => {
+        const isFav = savedData.favoritos.includes(track.id);
+        const item = document.createElement('div');
+        item.className = `song-item ${track.index === currentPlayingIndex ? 'active' : ''}`;
+        item.dataset.index = track.index;
+
+        item.innerHTML = `
+          <div class="song-details">
+            <div class="song-title-row">${track.title}</div>
+            <div class="song-artist-row">${track.artist}</div>
+          </div>
+          <button class="star-btn ${isFav ? 'fav' : ''}" title="Marcar como favorita">★</button>
+        `;
+
+        item.querySelector('.song-details').addEventListener('click', () => {
+          loadTrack(track.index);
+          playAudio();
+        });
+
+        const starBtn = item.querySelector('.star-btn');
+        starBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          toggleFavorite(track.id, starBtn);
+        });
+
+        playlistContainer.appendChild(item);
+      });
+
+      applySearchFilter();
+    }
+
+    function toggleFavorite(trackId, btnElement) {
+      const idx = savedData.favoritos.indexOf(trackId);
+      if (idx > -1) {
+        savedData.favoritos.splice(idx, 1);
+        btnElement.classList.remove('fav');
+      } else {
+        savedData.favoritos.push(trackId);
+        btnElement.classList.add('fav');
+      }
+      saveAppData();
+      if (currentFilterTab === 'favoritos') {
+        renderPlaylist();
+      }
+    }
+
+    function extractMetadataForFiles() {
+      if (!window.jsmediatags) return;
+
+      allTracks.forEach((track) => {
+        window.jsmediatags.read(track.file, {
+          onSuccess: (tag) => {
+            const tags = tag.tags;
+            if (tags.title) track.title = tags.title;
+            if (tags.artist) track.artist = tags.artist;
+            if (tags.picture) track.picture = tags.picture;
+
+            const domItem = playlistContainer.querySelector(`[data-index="${track.index}"]`);
+            if (domItem) {
+              domItem.querySelector('.song-title-row').textContent = track.title;
+              domItem.querySelector('.song-artist-row').textContent = track.artist;
+            }
+
+            if (track.index === currentPlayingIndex) {
+              updateTrackDisplay(track);
+            }
+          },
+          onError: () => {}
+        });
+      });
+    }
+
+    function loadTrack(index) {
+      if (!allTracks[index]) return;
+      currentPlayingIndex = index;
+      const track = allTracks[index];
+      audioElement.src = track.url;
+      updateTrackDisplay(track);
+      highlightCurrentInList();
+    }
+
+    function updateTrackDisplay(track) {
+      trackTitle.textContent = track.title;
+      trackArtist.textContent = track.artist;
+
+      if (track.picture) {
+        const { data, format } = track.picture;
+        let base64String = "";
+        for (let i = 0; i < data.length; i++) {
+          base64String += String.fromCharCode(data[i]);
+        }
+        coverImg.src = `data:${format};base64,${window.btoa(base64String)}`;
+        coverImg.style.display = 'block';
+        coverPlaceholder.style.display = 'none';
+      } else {
+        coverImg.style.display = 'none';
+        coverPlaceholder.style.display = 'block';
+      }
+    }
+
+    function highlightCurrentInList() {
+      const items = playlistContainer.querySelectorAll('.song-item');
+      items.forEach(item => {
+        if (parseInt(item.dataset.index) === currentPlayingIndex) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    function playAudio() {
+      // Manejo de promesas requerido por Safari en iOS
+      const playPromise = audioElement.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          isPlaying = true;
+          playBtn.textContent = '⏸';
+        }).catch(error => {
+          console.log("Reproducción pausada o bloqueada por el navegador:", error);
+        });
+      }
+    }
+
+    function pauseAudio() {
+      audioElement.pause();
+      isPlaying = false;
+      playBtn.textContent = '▶';
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (allTracks.length === 0) return;
+      if (isPlaying) {
+        pauseAudio();
+      } else {
+        playAudio();
+      }
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (allTracks.length === 0) return;
+      currentPlayingIndex = (currentPlayingIndex - 1 + allTracks.length) % allTracks.length;
+      loadTrack(currentPlayingIndex);
+      playAudio();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (allTracks.length === 0) return;
+      currentPlayingIndex = (currentPlayingIndex + 1) % allTracks.length;
+      loadTrack(currentPlayingIndex);
+      playAudio();
+    });
+
+    audioElement.addEventListener('ended', () => {
+      nextBtn.click();
+    });
+
+    audioElement.addEventListener('timeupdate', () => {
+      if (audioElement.duration) {
+        const percent = (audioElement.currentTime / audioElement.duration) * 100;
+        progressBar.style.width = `${percent}%`;
+        currentTimeText.textContent = formatTime(audioElement.currentTime);
+        durationTimeText.textContent = formatTime(audioElement.duration);
+      }
+    });
+
+    progressBarContainer.addEventListener('click', (e) => {
+      if (!audioElement.duration) return;
+      const rect = progressBarContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      audioElement.currentTime = (clickX / rect.width) * audioElement.duration;
+    });
+
+    function applySearchFilter() {
+      const query = searchInput.value.toLowerCase().trim();
+      const items = playlistContainer.querySelectorAll('.song-item');
+
+      items.forEach(item => {
+        const titleText = item.querySelector('.song-title-row').textContent.toLowerCase();
+        const artistText = item.querySelector('.song-artist-row').textContent.toLowerCase();
+
+        if (titleText.includes(query) || artistText.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    searchInput.addEventListener('input', applySearchFilter);
+
+    // Respaldo JSON
+    exportBackupBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(savedData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `atlas_playlists_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    importBackupInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported.favoritos && imported.playlists) {
+            savedData = imported;
+            saveAppData();
+            renderTabs();
+            renderPlaylist();
+            alert('¡Listas y favoritos restaurados correctamente!');
+          } else {
+            alert('El archivo no tiene el formato de respaldo válido de Atlas.');
+          }
+        } catch (err) {
+          alert('Error al leer el archivo JSON.');
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
