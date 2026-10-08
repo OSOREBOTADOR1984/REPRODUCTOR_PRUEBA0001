@@ -22,6 +22,8 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     body {
@@ -35,6 +37,98 @@
       padding: 20px 15px;
     }
 
+    /* PANTALLA DE BLOQUEO POR TOKEN */
+    #lockScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0b091a;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lock-box {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 30px 24px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .lock-icon {
+      font-size: 45px;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .lock-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .lock-desc {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 20px;
+    }
+
+    .token-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      color: #ffffff;
+      font-size: 15px;
+      text-align: center;
+      letter-spacing: 2px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+
+    .token-input:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-unlock {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      border: none;
+      background: #8b5cf6;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-unlock:hover {
+      background: #7c3aed;
+    }
+
+    .lock-error {
+      color: #ff5555;
+      font-size: 12px;
+      margin-top: 12px;
+      min-height: 16px;
+    }
+
+    /* REPRODUCTOR */
     .player-card {
       width: 100%;
       max-width: 460px;
@@ -169,7 +263,6 @@
       background: #7c3aed;
     }
 
-    /* Módulo de Descarga Directa desde URL */
     .downloader-box {
       width: 100%;
       background: rgba(0, 0, 0, 0.25);
@@ -196,6 +289,8 @@
       color: #ffffff;
       font-size: 12px;
       outline: none;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     #urlInput:focus {
@@ -226,7 +321,6 @@
       min-height: 14px;
     }
 
-    /* Acciones: Cargar y Respaldo */
     .actions-bar {
       display: flex;
       gap: 8px;
@@ -255,7 +349,6 @@
       display: none;
     }
 
-    /* Pestañas de Playlists */
     .playlist-tabs {
       display: flex;
       gap: 8px;
@@ -292,7 +385,6 @@
       border-color: #8b5cf6;
     }
 
-    /* Buscador */
     .search-container {
       width: 100%;
       margin-bottom: 12px;
@@ -308,6 +400,8 @@
       font-size: 13px;
       outline: none;
       transition: all 0.3s ease;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     #searchInput:focus {
@@ -320,7 +414,6 @@
       color: rgba(255, 255, 255, 0.45);
     }
 
-    /* Lista de canciones */
     .playlist-container {
       width: 100%;
       max-height: 200px;
@@ -403,6 +496,18 @@
 </head>
 <body>
 
+  <!-- PANTALLA DE BLOQUEO DE TOKEN -->
+  <div id="lockScreen">
+    <div class="lock-box">
+      <span class="lock-icon">🔒</span>
+      <div class="lock-title">ACCESO ATLAS</div>
+      <div class="lock-desc">Introduce tu token para desbloquear la aplicación.</div>
+      <input type="password" id="tokenField" class="token-input" placeholder="••••••••" autocomplete="off">
+      <button class="btn-unlock" id="btnUnlock">Acceder</button>
+      <div class="lock-error" id="lockError"></div>
+    </div>
+  </div>
+
   <div class="player-card">
     <div class="cover-container">
       <img id="coverImg" alt="Portada de canción">
@@ -430,7 +535,6 @@
       <button class="btn-control" id="nextBtn" title="Siguiente">⏭</button>
     </div>
 
-    <!-- NUEVO: Módulo para descargar desde el teléfono -->
     <div class="downloader-box">
       <div class="downloader-row">
         <input type="text" id="urlInput" placeholder="Pegar enlace de YouTube aquí..." autocomplete="off">
@@ -465,14 +569,69 @@
   <audio id="audioElement" playsinline preload="auto"></audio>
 
   <script>
+    // --- CAPA DE SEGURIDAD Y BLOQUEO ANTI-COPIA ---
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      // Bloquear F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I'))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // Hash SHA-256 del token: "ATLAS2026"
+    const AUTH_HASH = "805a5dbe8ae0b832b8fa5e34749ff827254e4ae2c90c74fb91e0a986ea9a7338";
+
+    async function computeSHA256(text) {
+      const msgBuffer = new TextEncoder().encode(text);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    const lockScreen = document.getElementById('lockScreen');
+    const tokenField = document.getElementById('tokenField');
+    const btnUnlock = document.getElementById('btnUnlock');
+    const lockError = document.getElementById('lockError');
+
+    // Verificar si el dispositivo ya fue autorizado previamente
+    if (localStorage.getItem('atlas_device_authorized') === AUTH_HASH) {
+      lockScreen.style.display = 'none';
+    }
+
+    async function checkToken() {
+      const input = tokenField.value.trim();
+      if (!input) return;
+
+      const hashed = await computeSHA256(input);
+      if (hashed === AUTH_HASH) {
+        localStorage.setItem('atlas_device_authorized', AUTH_HASH);
+        lockScreen.style.display = 'none';
+      } else {
+        lockError.textContent = 'Token incorrecto. Acceso denegado.';
+        tokenField.value = '';
+      }
+    }
+
+    btnUnlock.addEventListener('click', checkToken);
+    tokenField.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') checkToken();
+    });
+
+    // --- SERVICE WORKER ---
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(err => {
-          console.log('Fallo en Service Worker:', err);
+          console.log('SW:', err);
         });
       });
     }
 
+    // --- REPRODUCTOR ---
     const audioElement = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
     const prevBtn = document.getElementById('prevBtn');
@@ -517,7 +676,6 @@
       return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
-    // DESCARGA DIRECTA POR ENLACE DESDE EL CELULAR
     btnDownloadUrl.addEventListener('click', async () => {
       const url = urlInput.value.trim();
       if (!url) {
@@ -527,7 +685,6 @@
 
       downloadStatus.textContent = 'Procesando enlace...';
 
-      // Instancias públicas del extractor Cobalt
       const instances = [
         'https://cobalt-backend.canine.tools',
         'https://api.cobalt.tools'
@@ -558,12 +715,12 @@
             break;
           }
         } catch (e) {
-          console.warn('Reintentando con siguiente instancia...', e);
+          console.warn('Reintentando...', e);
         }
       }
 
       if (audioUrl) {
-        downloadStatus.textContent = 'Descargando archivo al teléfono...';
+        downloadStatus.textContent = 'Descargando al dispositivo...';
         try {
           const fileResp = await fetch(audioUrl);
           const blob = await fileResp.blob();
@@ -583,11 +740,10 @@
           loadTrack(newTrack.index);
           playAudio();
 
-          downloadStatus.textContent = '¡Descargado y reproduciendo!';
+          downloadStatus.textContent = '¡Listo!';
           urlInput.value = '';
-          setTimeout(() => { downloadStatus.textContent = ''; }, 4000);
-        } catch (fetchErr) {
-          // Si falla la descarga directa de blob por CORS, cargar directamente la URL de streaming
+          setTimeout(() => { downloadStatus.textContent = ''; }, 3500);
+        } catch (err) {
           const newTrack = {
             id: `${Date.now()}_${filename}`,
             index: allTracks.length,
@@ -604,7 +760,7 @@
           urlInput.value = '';
         }
       } else {
-        downloadStatus.textContent = 'No se pudo procesar. Verifica el link.';
+        downloadStatus.textContent = 'No se pudo procesar.';
       }
     });
 
