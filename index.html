@@ -2,34 +2,333 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mi Reproductor MP3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Reproductor MP3 Moderno</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      background-color: #121212;
-      color: white;
-      margin: 0;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #ffffff;
+      padding: 20px;
     }
-    audio {
-      margin-top: 20px;
+
+    .player-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      padding: 35px 28px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #a855f7;
+      background: rgba(168, 85, 247, 0.15);
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 22px;
+    }
+
+    /* Carátula de vinilo */
+    .vinyl-wrapper {
+      position: relative;
+      width: 190px;
+      height: 190px;
+      margin: 0 auto 24px auto;
+    }
+
+    .vinyl {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #2d2d3a 0%, #15151e 65%, #050508 100%);
+      border: 6px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: spin 10s linear infinite;
+      animation-play-state: paused;
+    }
+
+    .vinyl.spinning {
+      animation-play-state: running;
+    }
+
+    .vinyl-center {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    p.artist {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    /* Barra de progreso interactiva */
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ec4899, #8b5cf6);
+      border-radius: 10px;
+      transition: width 0.1s linear;
+    }
+
+    .time-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    /* Botones de control */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .btn {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      color: #ffffff;
+    }
+
+    .btn:active {
+      transform: scale(0.92);
+    }
+
+    .btn-secondary {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 18px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-main {
+      width: 66px;
+      height: 66px;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      font-size: 24px;
+      box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4);
+    }
+
+    .btn-main:hover {
+      box-shadow: 0 10px 25px rgba(236, 72, 153, 0.6);
+      transform: translateY(-2px);
+    }
+
+    /* Control de volumen */
+    .volume-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 15px;
+    }
+
+    .volume-icon {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>Reproductor de Prueba</h1>
-  <p>Presiona Play para escuchar el audio:</p>
+  <div class="player-card">
+    <span class="badge">Reproduciendo en la nube</span>
 
-  <!-- Enlace al MP3 de prueba libre en internet -->
-  <audio controls>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-    Tu navegador no soporta el reproductor de audio.
-  </audio>
+    <div class="vinyl-wrapper">
+      <div class="vinyl" id="vinyl">
+        <div class="vinyl-center">🎵</div>
+      </div>
+    </div>
 
+    <h2>Melodía de Prueba</h2>
+    <p class="artist">SoundHelix &bull; Piano Synth</p>
+
+    <!-- Barra de progreso -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="time-info">
+      <span id="currentTime">0:00</span>
+      <span id="duration">--:--</span>
+    </div>
+
+    <!-- Botones principales -->
+    <div class="controls">
+      <button class="btn btn-secondary" id="rewindBtn" title="Reiniciar">⏮</button>
+      <button class="btn btn-main" id="playBtn" title="Reproducir / Pausar">▶</button>
+      <button class="btn btn-secondary" id="forwardBtn" title="+10 segundos">⏩</button>
+    </div>
+
+    <!-- Barra de volumen -->
+    <div class="volume-container">
+      <span class="volume-icon">🔈</span>
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8">
+      <span class="volume-icon">🔊</span>
+    </div>
+  </div>
+
+  <!-- Audio nativo oculto controlado mediante JavaScript -->
+  <audio id="audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const rewindBtn = document.getElementById('rewindBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const vinyl = document.getElementById('vinyl');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+    // Control Play / Pausa
+    playBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        playBtn.textContent = '⏸';
+        vinyl.classList.add('spinning');
+      } else {
+        audio.pause();
+        playBtn.textContent = '▶';
+        vinyl.classList.remove('spinning');
+      }
+    });
+
+    // Reiniciar
+    rewindBtn.addEventListener('click', () => {
+      audio.currentTime = 0;
+    });
+
+    // Avanzar 10 segundos
+    forwardBtn.addEventListener('click', () => {
+      audio.currentTime = Math.min(audio.currentTime + 10, audio.duration || 0);
+    });
+
+    // Control de volumen
+    volumeSlider.addEventListener('input', (e) => {
+      audio.volume = e.target.value;
+    });
+
+    // Actualización de tiempos y barra
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    audio.addEventListener('loadedmetadata', () => {
+      durationEl.textContent = formatTime(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = percent + '%';
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+      }
+    });
+
+    // Adelantar al hacer clic en la barra
+    progressContainer.addEventListener('click', (e) => {
+      const width = progressContainer.clientWidth;
+      const clickX = e.offsetX;
+      if (audio.duration) {
+        audio.currentTime = (clickX / width) * audio.duration;
+      }
+    });
+
+    // Al finalizar la canción
+    audio.addEventListener('ended', () => {
+      playBtn.textContent = '▶';
+      vinyl.classList.remove('spinning');
+      progressBar.style.width = '0%';
+    });
+  </script>
 </body>
 </html>
