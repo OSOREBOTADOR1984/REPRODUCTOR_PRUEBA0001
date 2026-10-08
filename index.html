@@ -7,13 +7,13 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#8b5cf6">
   
-  <!-- Compatibilidad específica para iOS / iPhone -->
+  <!-- Compatibilidad iOS / Safari -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Atlas Player">
   <link rel="apple-touch-icon" href="icono-oso.png">
 
-  <!-- Lectura de metadatos y carátulas (soporta MP3, M4A y AAC) -->
+  <!-- Lectura de metadatos ID3 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   
   <style>
@@ -99,7 +99,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Barra de progreso */
     .progress-box {
       width: 100%;
       margin-bottom: 16px;
@@ -129,7 +128,6 @@
       margin-top: 6px;
     }
 
-    /* Botones de control */
     .controls {
       display: flex;
       align-items: center;
@@ -169,6 +167,63 @@
 
     .btn-play:hover {
       background: #7c3aed;
+    }
+
+    /* Módulo de Descarga Directa desde URL */
+    .downloader-box {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 16px;
+      padding: 10px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .downloader-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    #urlInput {
+      flex: 1;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 12px;
+      outline: none;
+    }
+
+    #urlInput:focus {
+      border-color: #8b5cf6;
+    }
+
+    .btn-download-url {
+      background: #8b5cf6;
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s ease;
+    }
+
+    .btn-download-url:hover {
+      background: #7c3aed;
+    }
+
+    .download-status {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      min-height: 14px;
     }
 
     /* Acciones: Cargar y Respaldo */
@@ -268,7 +323,7 @@
     /* Lista de canciones */
     .playlist-container {
       width: 100%;
-      max-height: 220px;
+      max-height: 200px;
       overflow-y: auto;
       border-radius: 12px;
       background: rgba(0, 0, 0, 0.2);
@@ -356,7 +411,7 @@
 
     <div class="track-info">
       <div id="trackTitle" class="track-title">Sin pistas cargadas</div>
-      <div id="trackArtist" class="track-artist">Selecciona tus archivos de audio</div>
+      <div id="trackArtist" class="track-artist">Carga archivos o descarga por link</div>
     </div>
 
     <div class="progress-box">
@@ -375,9 +430,17 @@
       <button class="btn-control" id="nextBtn" title="Siguiente">⏭</button>
     </div>
 
+    <!-- NUEVO: Módulo para descargar desde el teléfono -->
+    <div class="downloader-box">
+      <div class="downloader-row">
+        <input type="text" id="urlInput" placeholder="Pegar enlace de YouTube aquí..." autocomplete="off">
+        <button class="btn-download-url" id="btnDownloadUrl">⬇ Descargar</button>
+      </div>
+      <div class="download-status" id="downloadStatus"></div>
+    </div>
+
     <div class="actions-bar">
-      <!-- Selector con extensiones explícitas para iOS/Safari/Android -->
-      <label class="action-btn" for="audioFiles">📁 Cargar Música</label>
+      <label class="action-btn" for="audioFiles">📁 Cargar Archivos</label>
       <input type="file" id="audioFiles" accept=".m4a,.mp3,.aac,.wav,.ogg,.opus,audio/*" multiple>
 
       <button class="action-btn" id="exportBackupBtn">💾 Respaldar</button>
@@ -399,7 +462,6 @@
     <div class="playlist-container" id="playlistContainer"></div>
   </div>
 
-  <!-- playsinline y preload para soporte estricto en iOS -->
   <audio id="audioElement" playsinline preload="auto"></audio>
 
   <script>
@@ -430,6 +492,9 @@
     const createPlaylistBtn = document.getElementById('createPlaylistBtn');
     const exportBackupBtn = document.getElementById('exportBackupBtn');
     const importBackupInput = document.getElementById('importBackupInput');
+    const urlInput = document.getElementById('urlInput');
+    const btnDownloadUrl = document.getElementById('btnDownloadUrl');
+    const downloadStatus = document.getElementById('downloadStatus');
 
     let allTracks = [];
     let currentFilterTab = 'todas';
@@ -452,23 +517,116 @@
       return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
+    // DESCARGA DIRECTA POR ENLACE DESDE EL CELULAR
+    btnDownloadUrl.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) {
+        downloadStatus.textContent = 'Pega un enlace válido.';
+        return;
+      }
+
+      downloadStatus.textContent = 'Procesando enlace...';
+
+      // Instancias públicas del extractor Cobalt
+      const instances = [
+        'https://cobalt-backend.canine.tools',
+        'https://api.cobalt.tools'
+      ];
+
+      let audioUrl = null;
+      let filename = 'Pista Descargada';
+
+      for (let instance of instances) {
+        try {
+          const res = await fetch(`${instance}/`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              url: url,
+              downloadMode: 'audio',
+              audioFormat: 'm4a'
+            })
+          });
+
+          const data = await res.json();
+          if (data && (data.url || data.status === 'tunnel' || data.status === 'redirect')) {
+            audioUrl = data.url;
+            if (data.filename) filename = data.filename.replace(/\.[^/.]+$/, "");
+            break;
+          }
+        } catch (e) {
+          console.warn('Reintentando con siguiente instancia...', e);
+        }
+      }
+
+      if (audioUrl) {
+        downloadStatus.textContent = 'Descargando archivo al teléfono...';
+        try {
+          const fileResp = await fetch(audioUrl);
+          const blob = await fileResp.blob();
+          const localBlobUrl = URL.createObjectURL(blob);
+
+          const newTrack = {
+            id: `${Date.now()}_${filename}`,
+            index: allTracks.length,
+            file: blob,
+            url: localBlobUrl,
+            title: filename,
+            artist: 'Descarga Directa'
+          };
+
+          allTracks.push(newTrack);
+          renderPlaylist();
+          loadTrack(newTrack.index);
+          playAudio();
+
+          downloadStatus.textContent = '¡Descargado y reproduciendo!';
+          urlInput.value = '';
+          setTimeout(() => { downloadStatus.textContent = ''; }, 4000);
+        } catch (fetchErr) {
+          // Si falla la descarga directa de blob por CORS, cargar directamente la URL de streaming
+          const newTrack = {
+            id: `${Date.now()}_${filename}`,
+            index: allTracks.length,
+            file: null,
+            url: audioUrl,
+            title: filename,
+            artist: 'Audio Enlace'
+          };
+          allTracks.push(newTrack);
+          renderPlaylist();
+          loadTrack(newTrack.index);
+          playAudio();
+          downloadStatus.textContent = '¡Reproduciendo vía enlace!';
+          urlInput.value = '';
+        }
+      } else {
+        downloadStatus.textContent = 'No se pudo procesar. Verifica el link.';
+      }
+    });
+
     fileInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
 
-      allTracks = files.map((file, idx) => ({
+      const newEntries = files.map((file, idx) => ({
         id: file.name,
-        index: idx,
+        index: allTracks.length + idx,
         file: file,
         url: URL.createObjectURL(file),
         title: file.name.replace(/\.[^/.]+$/, ""),
         artist: 'Artista Desconocido'
       }));
 
+      allTracks = allTracks.concat(newEntries);
+
       renderTabs();
       renderPlaylist();
       extractMetadataForFiles();
-      if (allTracks.length > 0) loadTrack(0);
+      if (currentPlayingIndex === -1 && allTracks.length > 0) loadTrack(0);
     });
 
     function renderTabs() {
@@ -565,6 +723,7 @@
       if (!window.jsmediatags) return;
 
       allTracks.forEach((track) => {
+        if (!track.file) return;
         window.jsmediatags.read(track.file, {
           onSuccess: (tag) => {
             const tags = tag.tags;
@@ -627,14 +786,13 @@
     }
 
     function playAudio() {
-      // Manejo de promesas requerido por Safari en iOS
       const playPromise = audioElement.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
           isPlaying = true;
           playBtn.textContent = '⏸';
         }).catch(error => {
-          console.log("Reproducción pausada o bloqueada por el navegador:", error);
+          console.log("Audio en espera de interacción:", error);
         });
       }
     }
@@ -706,7 +864,6 @@
 
     searchInput.addEventListener('input', applySearchFilter);
 
-    // Respaldo JSON
     exportBackupBtn.addEventListener('click', () => {
       const dataStr = JSON.stringify(savedData, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
@@ -733,7 +890,7 @@
             renderPlaylist();
             alert('¡Listas y favoritos restaurados correctamente!');
           } else {
-            alert('El archivo no tiene el formato de respaldo válido de Atlas.');
+            alert('Formato de respaldo no válido.');
           }
         } catch (err) {
           alert('Error al leer el archivo JSON.');
