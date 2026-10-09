@@ -1,41 +1,24 @@
-const CACHE_NAME = 'atlas-player-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js',
-  'https://cdn-icons-png.flaticon.com/512/1998/1998610.png'
-];
-
-// Instalación: guardar archivos básicos en caché
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
-  self.skipWaiting();
-});
-
-// Activación: limpiar versiones viejas
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-// Estrategia: responder desde la memoria interna si no hay conexión
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    }).catch(() => {
-      return caches.match('./index.html');
-    })
-  );
-});
+{
+  "name": "ATLAS PLAYER",
+  "short_name": "Atlas",
+  "start_url": "/REPRODUCTOR_PRUEBA0001/",
+  "scope": "/REPRODUCTOR_PRUEBA0001/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0c29",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
