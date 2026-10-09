@@ -7,11 +7,13 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#8b5cf6">
   
+  <!-- Compatibilidad iOS / Safari PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Atlas Player">
   <link rel="apple-touch-icon" href="icono-oso.png">
 
+  <!-- Lectura de metadatos ID3 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   
   <style>
@@ -35,7 +37,7 @@
       padding: 20px 15px;
     }
 
-    /* PANTALLA DE BLOQUEO */
+    /* PANTALLA DE BLOQUEO POR TOKEN */
     #lockScreen {
       position: fixed;
       top: 0;
@@ -51,7 +53,6 @@
       padding: 20px;
     }
 
-    /* NOTIFICACIÓN FLOTANTE PARA EL DISEÑADOR */
     #designerAlert {
       display: none;
       width: 90%;
@@ -65,12 +66,6 @@
       margin-bottom: 20px;
       box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
       text-align: left;
-      animation: pulseAlert 2s infinite alternate;
-    }
-
-    @keyframes pulseAlert {
-      from { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); }
-      to { box-shadow: 0 0 20px rgba(139, 92, 246, 0.6); }
     }
 
     .alert-header {
@@ -95,10 +90,10 @@
       color: #fff;
       font-weight: 800;
       letter-spacing: 2px;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 8px;
       margin-top: 5px;
-      font-size: 14px;
+      font-size: 15px;
       cursor: pointer;
     }
 
@@ -147,6 +142,8 @@
       letter-spacing: 2px;
       outline: none;
       margin-bottom: 14px;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .token-input:focus {
@@ -164,7 +161,6 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s ease;
     }
 
     .btn-unlock:hover {
@@ -324,6 +320,11 @@
       box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
     }
 
+    .btn-play:hover {
+      background: #7c3aed;
+    }
+
+    /* MÓDULO DE DESCARGA DIRECTA POR YOUTUBE */
     .downloader-box {
       width: 100%;
       background: rgba(0, 0, 0, 0.25);
@@ -354,6 +355,10 @@
       -webkit-user-select: text;
     }
 
+    #urlInput:focus {
+      border-color: #8b5cf6;
+    }
+
     .btn-download-url {
       background: #8b5cf6;
       border: none;
@@ -363,6 +368,7 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
     }
 
     .download-status {
@@ -501,30 +507,28 @@
 </head>
 <body>
 
-  <!-- PANTALLA DE ACCESO Y PANEL DEL DISEÑADOR -->
+  <!-- PANTALLA DE BLOQUEO / TOKEN -->
   <div id="lockScreen">
-    
-    <!-- NOTIFICACIÓN EN TIEMPO REAL PARA EL CREADOR -->
     <div id="designerAlert">
       <div class="alert-header">
         <span>⚡ PANEL DEL DISEÑADOR</span>
         <span id="tokenExpiry">Expira a las 23:59</span>
       </div>
       <div class="alert-body">
-        Token válido para hoy:
+        Token de activación para hoy:
         <div>
           <span class="today-token-badge" id="todayTokenBadge" title="Toca para copiar">------</span>
         </div>
-        <small style="color: #c4b5fd; display:block; margin-top:4px;">(Toca el código para copiarlo al portapapeles y mandarlo)</small>
+        <small style="color: #c4b5fd; display:block; margin-top:4px;">(Toca el código para copiarlo y enviarlo)</small>
       </div>
     </div>
 
     <div class="lock-box">
       <span class="lock-icon">🔒</span>
-      <div class="lock-title" id="lockTitleBtn" title="Triple toque para modo diseñador">ACCESO ATLAS</div>
-      <div class="lock-desc">Introduce tu token diario para desbloquear la sesión.</div>
+      <div class="lock-title" id="lockTitleBtn">ACCESO ATLAS</div>
+      <div class="lock-desc">Introduce tu token para desbloquear tu acceso.</div>
       <input type="password" id="tokenField" class="token-input" placeholder="Código de 6 dígitos" autocomplete="off">
-      <button class="btn-unlock" id="btnUnlock">Acceder</button>
+      <button class="btn-unlock" id="btnUnlock">Activar</button>
       <div class="lock-error" id="lockError"></div>
     </div>
   </div>
@@ -558,6 +562,7 @@
       <button class="btn-control btn-toggle" id="loopBtn" title="Repetir">🔁</button>
     </div>
 
+    <!-- MÓDULO DE DESCARGA VISIBLE -->
     <div class="downloader-box">
       <div class="downloader-row">
         <input type="text" id="urlInput" placeholder="Pegar enlace de YouTube aquí..." autocomplete="off">
@@ -567,7 +572,7 @@
     </div>
 
     <div class="actions-bar">
-      <label class="action-btn" for="audioFiles">📁 Cargar Archivos</label>
+      <label class="action-btn" for="audioFiles">📁 Cargar Música</label>
       <input type="file" id="audioFiles" accept=".m4a,.mp3,.aac,.wav,.ogg,.opus,audio/*" multiple>
 
       <button class="action-btn" id="exportBackupBtn">💾 Respaldar</button>
@@ -592,24 +597,22 @@
   <audio id="audioElement" playsinline preload="auto"></audio>
 
   <script>
-    // --- SEGURIDAD: TOKEN DIARIO DINÁMICO ---
-    const SECRET_SALT = "ATLAS_SECRET_2026"; // Tu semilla privada
-    const MASTER_DESIGNER_KEY = "ATLAS_CREADOR"; // Tu llave maestra personal
+    // --- SEGURIDAD: TOKEN DIARIO Y LICENCIA PERMANENTE ---
+    const SECRET_SALT = "ATLAS_SECRET_2026";
+    const MASTER_DESIGNER_KEY = "ATLAS_CREADOR";
 
     function getTodayDateString() {
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
     }
 
-    // Genera un token numérico único de 6 dígitos que cambia cada medianoche
     async function generateDailyToken(dateStr) {
       const msg = SECRET_SALT + "_" + dateStr;
       const msgBuffer = new TextEncoder().encode(msg);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      // Tomamos los primeros bytes para calcular 6 dígitos legibles
       const num = ((hashArray[0] << 24) | (hashArray[1] << 16) | (hashArray[2] << 8) | hashArray[3]) >>> 0;
-      return String(num % 900000 + 100000); // Siempre 6 dígitos (ej: 482910)
+      return String(num % 900000 + 100000);
     }
 
     const lockScreen = document.getElementById('lockScreen');
@@ -622,51 +625,47 @@
 
     let currentDailyToken = "";
 
+    const hasLifetimeLicense = localStorage.getItem('atlas_lifetime_license') === 'active';
+    const isDesigner = localStorage.getItem('atlas_role') === 'designer';
+
+    if (hasLifetimeLicense || isDesigner) {
+      lockScreen.style.display = 'none';
+    }
+
     async function initAuth() {
       const today = getTodayDateString();
       currentDailyToken = await generateDailyToken(today);
 
-      // Si eres el diseñador (marcado en tu dispositivo), mostrar la alerta de inmediato
-      const isDesigner = localStorage.getItem('atlas_role') === 'designer';
       if (isDesigner) {
         designerAlert.style.display = 'block';
         todayTokenBadge.textContent = currentDailyToken;
       }
-
-      // Si el cliente ya ingresó el token DE HOY, entra directo sin pedirlo otra vez hoy
-      const lastSessionDate = localStorage.getItem('atlas_authorized_date');
-      if (lastSessionDate === today) {
-        lockScreen.style.display = 'none';
-      }
     }
     initAuth();
 
-    // Copiar el token de hoy al tocar el badge
     todayTokenBadge.addEventListener('click', () => {
       navigator.clipboard.writeText(currentDailyToken);
-      alert('Token copiado al portapapeles: ' + currentDailyToken);
+      alert('Token copiado: ' + currentDailyToken);
     });
 
-    // Activar modo diseñador con clave maestra en el input
     btnUnlock.addEventListener('click', async () => {
       const val = tokenField.value.trim();
-      const today = getTodayDateString();
 
       if (val === MASTER_DESIGNER_KEY) {
         localStorage.setItem('atlas_role', 'designer');
         designerAlert.style.display = 'block';
         todayTokenBadge.textContent = currentDailyToken;
         lockScreen.style.display = 'none';
-        alert('Modo diseñador activado en este teléfono.');
+        alert('Modo Diseñador activado.');
         return;
       }
 
       if (val === currentDailyToken) {
-        // Acceso diario válido
-        localStorage.setItem('atlas_authorized_date', today);
+        localStorage.setItem('atlas_lifetime_license', 'active');
         lockScreen.style.display = 'none';
+        alert('¡Activación permanente completada con éxito!');
       } else {
-        lockError.textContent = 'Token incorrecto o expirado para hoy.';
+        lockError.textContent = 'Token incorrecto o no válido para hoy.';
         tokenField.value = '';
       }
     });
@@ -675,7 +674,6 @@
       if (e.key === 'Enter') btnUnlock.click();
     });
 
-    // Triple toque en el título para revelar panel si eres el dueño
     let tapCount = 0;
     lockTitleBtn.addEventListener('click', () => {
       tapCount++;
@@ -687,7 +685,16 @@
       setTimeout(() => { tapCount = 0; }, 1500);
     });
 
-    // --- REPRODUCTOR COMPLETO ---
+    // --- REGISTRO DE SERVICE WORKER PARA PERMITIR INSTALACIÓN (PWA) ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.log('SW error:', err);
+        });
+      });
+    }
+
+    // --- REPRODUCTOR ---
     const audioElement = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
     const prevBtn = document.getElementById('prevBtn');
@@ -742,16 +749,14 @@
         if (track.picture) {
           const { data, format } = track.picture;
           let base64String = "";
-          for (let i = 0; i < data.length; i++) {
-            base64String += String.fromCharCode(data[i]);
-          }
+          for (let i = 0; i < data.length; i++) base64String += String.fromCharCode(data[i]);
           artworkSrc = `data:${format};base64,${window.btoa(base64String)}`;
         }
 
         navigator.mediaSession.metadata = new MediaMetadata({
           title: track.title,
           artist: track.artist,
-          album: 'Atlas Library',
+          album: 'Atlas Player',
           artwork: [{ src: artworkSrc, sizes: '512x512', type: 'image/png' }]
         });
 
@@ -846,9 +851,12 @@
     btnDownloadUrl.addEventListener('click', async () => {
       const url = urlInput.value.trim();
       if (!url) return;
-      downloadStatus.textContent = 'Procesando...';
+      downloadStatus.textContent = 'Procesando enlace...';
 
-      const instances = ['https://cobalt-backend.canine.tools', 'https://api.cobalt.tools'];
+      const instances = [
+        'https://cobalt-backend.canine.tools',
+        'https://api.cobalt.tools'
+      ];
       let audioUrl = null;
       let filename = 'Pista Descargada';
 
@@ -869,7 +877,7 @@
       }
 
       if (audioUrl) {
-        downloadStatus.textContent = 'Descargando...';
+        downloadStatus.textContent = 'Descargando al dispositivo...';
         try {
           const fileResp = await fetch(audioUrl);
           const blob = await fileResp.blob();
@@ -892,7 +900,7 @@
           urlInput.value = '';
         }
       } else {
-        downloadStatus.textContent = 'Error al procesar.';
+        downloadStatus.textContent = 'Error al procesar enlace.';
       }
     });
 
