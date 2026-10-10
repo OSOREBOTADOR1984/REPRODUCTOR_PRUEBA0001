@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,13 +8,11 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#8b5cf6">
   
-  <!-- Compatibilidad iOS / Safari PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Atlas Player">
   <link rel="apple-touch-icon" href="icono-oso.png">
 
-  <!-- Lectura de metadatos ID3 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   
   <style>
@@ -50,6 +49,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
 
     .cover-container {
@@ -134,7 +134,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 12px;
       margin-bottom: 18px;
       width: 100%;
     }
@@ -180,10 +180,6 @@
       border-color: #8b5cf6;
       font-size: 22px;
       box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
-    }
-
-    .btn-play:hover {
-      background: #7c3aed;
     }
 
     .downloader-box {
@@ -246,10 +242,6 @@
       align-items: center;
       justify-content: center;
       white-space: nowrap;
-    }
-
-    .btn-external-tool:hover {
-      background: rgba(255, 255, 255, 0.2);
     }
 
     .download-status {
@@ -384,11 +376,66 @@
     .star-btn.fav {
       color: #ffd700;
     }
+
+    /* MODAL DE LETRAS */
+    #lyricsModal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 12, 41, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      z-index: 100;
+      padding: 24px;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .lyrics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #c4b5fd;
+    }
+
+    .lyrics-content {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, 0.85);
+      white-space: pre-wrap;
+      user-select: text;
+    }
+
+    .btn-close-lyrics {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <div class="player-card">
+    <!-- PANEL DE LETRAS (MODAL) -->
+    <div id="lyricsModal">
+      <div class="lyrics-header">
+        <span id="lyricsTrackTitle">Letra de la canción</span>
+        <button class="btn-close-lyrics" id="btnCloseLyrics">✕ Cerrar</button>
+      </div>
+      <div class="lyrics-content" id="lyricsContent">No hay letra disponible para esta pista.</div>
+    </div>
+
     <div class="cover-container">
       <img id="coverImg" alt="Portada">
       <div id="coverPlaceholder" class="cover-placeholder">♪</div>
@@ -396,7 +443,7 @@
 
     <div class="track-info">
       <div id="trackTitle" class="track-title">Sin pistas cargadas</div>
-      <div id="trackArtist" class="track-artist">Carga archivos o descarga por link</div>
+      <div id="trackArtist" class="track-artist">Toca Cargar Música o descarga por link</div>
     </div>
 
     <div class="progress-box">
@@ -415,6 +462,7 @@
       <button class="btn-control btn-play" id="playBtn" title="Reproducir">▶</button>
       <button class="btn-control" id="nextBtn" title="Siguiente">⏭</button>
       <button class="btn-control btn-toggle" id="loopBtn" title="Repetir">🔁</button>
+      <button class="btn-control btn-toggle" id="lyricsBtn" title="Ver Letra">🎤</button>
     </div>
 
     <div class="downloader-box">
@@ -452,18 +500,78 @@
   <audio id="audioElement" playsinline preload="auto"></audio>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW:', err));
+    // --- 1. BASE DE DATOS LOCAL PERMANENTE (INDEXEDDB) ---
+    const DB_NAME = 'AtlasAudioDB';
+    const STORE_NAME = 'tracks';
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+          const dbInstance = e.target.result;
+          if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+            dbInstance.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        request.onerror = (e) => reject(e);
       });
     }
 
+    function saveTrackToDB(trackObj) {
+      if (!db || !trackObj.file) return;
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put({
+        id: trackObj.id,
+        title: trackObj.title,
+        artist: trackObj.artist,
+        file: trackObj.file
+      });
+    }
+
+    async function loadTracksFromDB() {
+      if (!db) return;
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const storedItems = req.result || [];
+        storedItems.forEach((item, idx) => {
+          const localBlobUrl = URL.createObjectURL(item.file);
+          allTracks.push({
+            id: item.id,
+            index: allTracks.length,
+            file: item.file,
+            url: localBlobUrl,
+            title: item.title,
+            artist: item.artist
+          });
+        });
+        if (allTracks.length > 0) {
+          renderPlaylist();
+          loadTrack(0);
+        }
+      };
+    }
+
+    // --- REPRODUCTOR ---
     const audioElement = document.getElementById('audioElement');
     const playBtn = document.getElementById('playBtn');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const shuffleBtn = document.getElementById('shuffleBtn');
     const loopBtn = document.getElementById('loopBtn');
+    const lyricsBtn = document.getElementById('lyricsBtn');
+    const lyricsModal = document.getElementById('lyricsModal');
+    const btnCloseLyrics = document.getElementById('btnCloseLyrics');
+    const lyricsContent = document.getElementById('lyricsContent');
+    const lyricsTrackTitle = document.getElementById('lyricsTrackTitle');
+
     const fileInput = document.getElementById('audioFiles');
     const playlistContainer = document.getElementById('playlistContainer');
     const playlistTabs = document.getElementById('playlistTabs');
@@ -529,6 +637,22 @@
         navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack());
       }
     }
+
+    // Modal de letras
+    lyricsBtn.addEventListener('click', () => {
+      if (currentPlayingIndex === -1 || !allTracks[currentPlayingIndex]) {
+        alert('Reproduce una canción primero.');
+        return;
+      }
+      const track = allTracks[currentPlayingIndex];
+      lyricsTrackTitle.textContent = `${track.title} - ${track.artist}`;
+      lyricsContent.textContent = track.lyrics || "No se encontraron letras incrustadas en este archivo.\n\nPuedes buscar la letra de esta canción y pegarla cuando quieras.";
+      lyricsModal.style.display = 'flex';
+    });
+
+    btnCloseLyrics.addEventListener('click', () => {
+      lyricsModal.style.display = 'none';
+    });
 
     shuffleBtn.addEventListener('click', () => {
       isShuffle = !isShuffle;
@@ -655,7 +779,7 @@
       }
 
       if (audioUrl) {
-        downloadStatus.textContent = 'Guardando en el teléfono...';
+        downloadStatus.textContent = 'Guardando en la memoria permanente...';
         try {
           const fileResp = await fetch(audioUrl);
           const blob = await fileResp.blob();
@@ -671,11 +795,12 @@
           };
 
           allTracks.push(newTrack);
+          saveTrackToDB(newTrack); // Guarda físicamente en el teléfono
           renderPlaylist();
           loadTrack(newTrack.index);
           playAudio();
 
-          downloadStatus.textContent = '¡Listo!';
+          downloadStatus.textContent = '¡Descargado y guardado!';
           urlInput.value = '';
           setTimeout(() => { downloadStatus.textContent = ''; }, 3500);
         } catch (fetchErr) {
@@ -703,14 +828,18 @@
     fileInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
-      const newEntries = files.map((file, idx) => ({
-        id: file.name,
-        index: allTracks.length + idx,
-        file: file,
-        url: URL.createObjectURL(file),
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        artist: 'Artista Desconocido'
-      }));
+      const newEntries = files.map((file, idx) => {
+        const trackItem = {
+          id: `${Date.now()}_${file.name}`,
+          index: allTracks.length + idx,
+          file: file,
+          url: URL.createObjectURL(file),
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          artist: 'Artista Desconocido'
+        };
+        saveTrackToDB(trackItem); // Guardado permanente inmediato
+        return trackItem;
+      });
       allTracks = allTracks.concat(newEntries);
       renderTabs();
       renderPlaylist();
@@ -808,6 +937,7 @@
             if (tags.title) track.title = tags.title;
             if (tags.artist) track.artist = tags.artist;
             if (tags.picture) track.picture = tags.picture;
+            if (tags.lyrics) track.lyrics = tags.lyrics.lyrics;
             const domItem = playlistContainer.querySelector(`[data-index="${track.index}"]`);
             if (domItem) {
               domItem.querySelector('.song-title-row').textContent = track.title;
@@ -937,6 +1067,11 @@
         } catch (err) { alert('Archivo no válido'); }
       };
       reader.readAsText(file);
+    });
+
+    // Iniciar BD persistente al cargar
+    initDB().then(() => {
+      loadTracksFromDB();
     });
   </script>
 </body>
