@@ -1,22 +1,43 @@
 {
   "name": "ATLAS PLAYER",
   "short_name": "Atlas",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Reproductor de musica local y descargador directo para audio offline",
+  "id": "/REPRODUCTOR_PRUEBA0001/",
+  "start_url": "/REPRODUCTOR_PRUEBA0001/index.html",
+  "scope": "/REPRODUCTOR_PRUEBA0001/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f0c29",
   "theme_color": "#8b5cf6",
+  "categories": ["music", "entertainment", "utilities"],
   "icons": [
     {
-      "src": "./icono-oso.png",
+      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "./icono-oso.png",
+      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Atlas Player Music"
+    },
+    {
+      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Atlas Player Music"
     }
   ]
 }
