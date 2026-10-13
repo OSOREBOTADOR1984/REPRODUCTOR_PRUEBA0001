@@ -7,38 +7,72 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#121212">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
     body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    header { padding: 16px; background-color: #181818; text-align: center; font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid #282828; }
-    #playlist-container { flex: 1; overflow-y: auto; padding: 10px; }
-    .track-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #1e1e1e; }
-    .track-item:hover, .track-item.active { background-color: #282828; }
-    .track-info { display: flex; flex-direction: column; }
-    .track-title { font-weight: 600; font-size: 0.95rem; }
-    .track-artist { font-size: 0.8rem; color: #b3b3b3; margin-top: 2px; }
     
-    /* Barra del reproductor */
-    #player-bar { background-color: #181818; padding: 14px 20px; border-top: 1px solid #282828; display: flex; flex-direction: column; gap: 8px; }
-    .now-playing { font-size: 0.85rem; color: #1db954; font-weight: 500; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    header { padding: 14px 20px; background-color: #181818; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282828; }
+    .brand { font-size: 1.1rem; font-weight: 800; letter-spacing: 1.5px; color: #1db954; }
+    #search-box { background: #282828; border: 1px solid #3e3e3e; color: #fff; padding: 8px 14px; border-radius: 20px; outline: none; width: 220px; font-size: 0.85rem; }
+    #search-box:focus { border-color: #1db954; }
+
+    #playlist-container { flex: 1; overflow-y: auto; padding: 12px; }
+    .track-item { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #1c1c1c; }
+    .track-item:hover { background-color: #242424; }
+    .track-item.active { background-color: #2a2a2a; border-left: 4px solid #1db954; }
+    
+    .track-img { width: 44px; height: 44px; border-radius: 6px; background-color: #282828; object-fit: cover; flex-shrink: 0; }
+    .track-info { display: flex; flex-direction: column; overflow: hidden; }
+    .track-title { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 0.8rem; color: #b3b3b3; margin-top: 3px; }
+    
+    #player-bar { background-color: #181818; padding: 12px 20px; border-top: 1px solid #282828; display: flex; flex-direction: column; gap: 8px; }
+    
+    .player-top { display: flex; align-items: center; justify-content: space-between; }
+    .current-meta { display: flex; align-items: center; gap: 12px; max-width: 45%; }
+    #player-cover { width: 48px; height: 48px; border-radius: 6px; background: #282828; object-fit: cover; }
+    .current-text { overflow: hidden; }
+    #now-title { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #now-artist { font-size: 0.75rem; color: #b3b3b3; margin-top: 2px; }
+    
+    .volume-box { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #b3b3b3; }
+    .volume-box input { width: 90px; accent-color: #1db954; cursor: pointer; }
+
     .progress-bar-container { display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #b3b3b3; }
-    input[type="range"] { flex: 1; accent-color: #1db954; cursor: pointer; }
+    input[type="range"] { flex: 1; accent-color: #1db954; cursor: pointer; height: 4px; }
     
-    .controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 4px; }
-    button { background: none; border: none; color: #fff; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; }
+    .controls { display: flex; justify-content: center; align-items: center; gap: 20px; }
+    button { background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s, transform 0.1s; }
     button:active { transform: scale(0.92); }
+    button.active-toggle { color: #1db954; font-weight: bold; }
     #btn-play { background-color: #1db954; color: #000; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; }
   </style>
 </head>
 <body>
 
-  <header>ATLAS PLAYER</header>
+  <header>
+    <div class="brand">ATLAS PLAYER</div>
+    <input type="text" id="search-box" placeholder="Buscar canción o artista...">
+  </header>
 
   <div id="playlist-container">
     <div id="playlist"></div>
   </div>
 
   <div id="player-bar">
-    <div class="now-playing" id="now-playing">Selecciona una pista</div>
+    <div class="player-top">
+      <div class="current-meta">
+        <img id="player-cover" src="" style="display: none;">
+        <div class="current-text">
+          <div id="now-title">Selecciona una pista</div>
+          <div id="now-artist">Listo para sonar</div>
+        </div>
+      </div>
+      
+      <div class="volume-box">
+        <span>🔊</span>
+        <input type="range" id="vol-bar" min="0" max="1" step="0.01" value="1">
+      </div>
+    </div>
     
     <div class="progress-bar-container">
       <span id="current-time">0:00</span>
@@ -47,9 +81,11 @@
     </div>
 
     <div class="controls">
-      <button id="btn-prev">⏮</button>
-      <button id="btn-play">▶</button>
-      <button id="btn-next">⏭</button>
+      <button id="btn-shuffle" title="Aleatorio">🔀</button>
+      <button id="btn-prev" title="Anterior">⏮</button>
+      <button id="btn-play" title="Play / Pausa">▶</button>
+      <button id="btn-next" title="Siguiente">⏭</button>
+      <button id="btn-loop" title="Repetir">🔁</button>
     </div>
   </div>
 
@@ -60,38 +96,52 @@
     const btnPlay = document.getElementById('btn-play');
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
+    const btnShuffle = document.getElementById('btn-shuffle');
+    const btnLoop = document.getElementById('btn-loop');
     const seekBar = document.getElementById('seek-bar');
+    const volBar = document.getElementById('vol-bar');
     const currentTimeText = document.getElementById('current-time');
     const durationTimeText = document.getElementById('duration-time');
-    const nowPlayingText = document.getElementById('now-playing');
+    const nowTitle = document.getElementById('now-title');
+    const nowArtist = document.getElementById('now-artist');
+    const playerCover = document.getElementById('player-cover');
     const playlistEl = document.getElementById('playlist');
+    const searchBox = document.getElementById('search-box');
 
     let tracks = [];
+    let filteredIndices = [];
     let currentIndex = 0;
+    let isShuffle = false;
+    let isLoop = false;
 
-    // Cargar la lista de canciones generada por Python
     fetch('playlist.json')
       .then(res => res.json())
       .then(data => {
         tracks = data;
+        filteredIndices = tracks.map((_, i) => i);
         renderPlaylist();
       })
       .catch(() => {
-        nowPlayingText.innerText = "Ejecuta generar_playlist.py primero";
+        nowTitle.innerText = "Error cargando playlist.json";
       });
 
     function renderPlaylist() {
       playlistEl.innerHTML = '';
-      tracks.forEach((track, index) => {
+      filteredIndices.forEach((trackIdx) => {
+        const track = tracks[trackIdx];
         const item = document.createElement('div');
-        item.className = `track-item ${index === currentIndex ? 'active' : ''}`;
+        item.className = `track-item ${trackIdx === currentIndex ? 'active' : ''}`;
+        
+        const coverHtml = track.cover ? `<img class="track-img" src="${track.cover}">` : `<div class="track-img" style="display:flex;align-items:center;justify-content:center;color:#666;">🎵</div>`;
+        
         item.innerHTML = `
+          ${coverHtml}
           <div class="track-info">
             <span class="track-title">${track.title}</span>
             <span class="track-artist">${track.artist || 'Desconocido'}</span>
           </div>
         `;
-        item.onclick = () => playTrack(index);
+        item.onclick = () => playTrack(trackIdx);
         playlistEl.appendChild(item);
       });
     }
@@ -104,12 +154,31 @@
     }
 
     function playTrack(index) {
+      if (index < 0 || index >= tracks.length) return;
       currentIndex = index;
       const track = tracks[currentIndex];
       audio.src = track.file;
       audio.play();
       btnPlay.innerText = '⏸';
-      nowPlayingText.innerText = `${track.title} - ${track.artist || ''}`;
+      nowTitle.innerText = track.title;
+      nowArtist.innerText = track.artist || 'Desconocido';
+      
+      if (track.cover) {
+        playerCover.src = track.cover;
+        playerCover.style.display = 'block';
+      } else {
+        playerCover.style.display = 'none';
+      }
+
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title,
+          artist: track.artist,
+          album: track.album,
+          artwork: track.cover ? [{ src: track.cover, sizes: '512x512', type: 'image/jpeg' }] : []
+        });
+      }
+
       renderPlaylist();
     }
 
@@ -127,16 +196,37 @@
       }
     };
 
-    btnPrev.onclick = () => {
+    function nextTrack() {
       if (tracks.length === 0) return;
-      currentIndex = (currentIndex - 1 + tracks.length) % tracks.length;
-      playTrack(currentIndex);
+      if (isShuffle) {
+        let rand = Math.floor(Math.random() * tracks.length);
+        playTrack(rand);
+      } else {
+        playTrack((currentIndex + 1) % tracks.length);
+      }
+    }
+
+    function prevTrack() {
+      if (tracks.length === 0) return;
+      playTrack((currentIndex - 1 + tracks.length) % tracks.length);
+    }
+
+    btnNext.onclick = nextTrack;
+    btnPrev.onclick = prevTrack;
+
+    btnShuffle.onclick = () => {
+      isShuffle = !isShuffle;
+      btnShuffle.classList.toggle('active-toggle', isShuffle);
     };
 
-    btnNext.onclick = () => {
-      if (tracks.length === 0) return;
-      currentIndex = (currentIndex + 1) % tracks.length;
-      playTrack(currentIndex);
+    btnLoop.onclick = () => {
+      isLoop = !isLoop;
+      audio.loop = isLoop;
+      btnLoop.classList.toggle('active-toggle', isLoop);
+    };
+
+    volBar.oninput = () => {
+      audio.volume = volBar.value;
     };
 
     audio.ontimeupdate = () => {
@@ -154,10 +244,32 @@
     };
 
     audio.onended = () => {
-      btnNext.click();
+      if (!isLoop) nextTrack();
     };
 
-    // Registro de Service Worker para PWA Offline
+    searchBox.oninput = (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      filteredIndices = tracks
+        .map((t, idx) => ({ t, idx }))
+        .filter(item => item.t.title.toLowerCase().includes(q) || item.t.artist.toLowerCase().includes(q))
+        .map(item => item.idx);
+      renderPlaylist();
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === searchBox) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        btnPlay.click();
+      } else if (e.code === 'ArrowRight') {
+        audio.currentTime = Math.min(audio.currentTime + 5, audio.duration);
+      } else if (e.code === 'ArrowLeft') {
+        audio.currentTime = Math.max(audio.currentTime - 5, 0);
+      } else if (e.key.toLowerCase() === 'n') {
+        nextTrack();
+      }
+    });
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
     }
