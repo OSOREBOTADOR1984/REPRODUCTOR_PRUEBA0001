@@ -1,43 +1,15 @@
 {
-  "name": "ATLAS PLAYER",
+  "name": "Atlas Player",
   "short_name": "Atlas",
-  "description": "Reproductor de musica local y descargador directo para audio offline",
-  "id": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/",
-  "start_url": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/index.html",
-  "scope": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/",
+  "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0f0c29",
-  "theme_color": "#8b5cf6",
-  "categories": ["music", "entertainment", "utilities"],
+  "background_color": "#121212",
+  "theme_color": "#121212",
   "icons": [
     {
-      "src": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/ICONO_ATLAS.jpg",
+      "src": "icon.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/ICONO_ATLAS.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/ICONO_ATLAS.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "form_factor": "narrow",
-      "label": "Atlas Player"
-    },
-    {
-      "src": "https://osorebotador1984.github.io/REPRODUCTOR_PRUEBA0001/ICONO_ATLAS.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Atlas Player"
+      "type": "image/png"
     }
   ]
 }
