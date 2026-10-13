@@ -1,24 +1,37 @@
-{
-  "name": "ATLAS PLAYER",
-  "short_name": "Atlas",
-  "start_url": "/REPRODUCTOR_PRUEBA0001/",
-  "scope": "/REPRODUCTOR_PRUEBA0001/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0f0c29",
-  "theme_color": "#8b5cf6",
-  "icons": [
-    {
-      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/REPRODUCTOR_PRUEBA0001/icono-oso.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
-}
+const CACHE_NAME = 'atlas-player-v2';
+
+const STATIC_ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './playlist.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      return cachedResponse || fetch(event.request);
+    })
+  );
+});
